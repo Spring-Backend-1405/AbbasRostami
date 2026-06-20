@@ -1,14 +1,15 @@
-import { JwtPayload } from "jsonwebtoken";
-
-interface TokenPayload extends JwtPayload {
-  id: string;
-  email: string;
-}
+import { Role } from "../../generated/prisma/enums";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: TokenPayload;
+      user?: {
+        id: string;
+        email: string;
+        role: Role;
+      };
     }
   }
 }
+
+export {};
