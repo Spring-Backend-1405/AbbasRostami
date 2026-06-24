@@ -1,0 +1,140 @@
+import { prisma } from "../../lib/prisma.js";
+import { AppError } from "../../utils/AppError.js";
+import {
+  buildPaginationMeta,
+  parsePagination,
+} from "../../utils/pagination.js";
+import { walletService } from "../wallet/wallet.service.js";
+import {
+  enrollmentInclude,
+  EnrollmentWithRelations,
+} from "./enrollment.types.js";
+import { ListMyCoursesQuery } from "./enrollment.validator.js";
+
+const formatEnrollment = (item: EnrollmentWithRelations) => {
+  const { _count, ...courseRest } = item.course;
+  return {
+    id: item.id,
+    pricePaid: item.pricePaid,
+    enrolledAt: item.createdAt,
+    course: {
+      ...courseRest,
+      stats: _count,
+    },
+  };
+};
+
+export const enrollmentService = {
+  async enroll(userId: string, slug: string) {
+    const course = await prisma.course.findFirst({
+      where: {
+        slug,
+        published: true,
+        OR: [{ categoryId: null }, { category: { show: true } }],
+      },
+    });
+
+    if (!course) {
+      throw new AppError("دوره مورد نظر یافت نشد", 404);
+    }
+
+    const existingEnrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId: course.id,
+        },
+      },
+    });
+
+    if (existingEnrollment) {
+      throw new AppError("شما قبلاً در این دوره ثبت‌نام کرده‌اید", 400);
+    }
+
+    if (course.price === 0) {
+      const enrollment = await prisma.enrollment.create({
+        data: {
+          userId,
+          courseId: course.id,
+          pricePaid: 0,
+        },
+        include: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              imageUrl: true,
+              price: true,
+            },
+          },
+        },
+      });
+
+      return {
+        enrollment,
+        message: "با موفقیت در دوره رایگان ثبت‌نام شدید",
+      };
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const enrollment = await tx.enrollment.create({
+        data: {
+          userId,
+          courseId: course.id,
+          pricePaid: course.price,
+        },
+        include: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              imageUrl: true,
+              price: true,
+            },
+          },
+        },
+      });
+
+      const { wallet, transaction } = await walletService.deductBalance(
+        userId,
+        course.price,
+        `خرید دوره: ${course.title}`,
+        course.id,
+        tx,
+      );
+
+      return { enrollment, wallet, transaction };
+    });
+
+    return {
+      enrollment: result.enrollment,
+      transaction: result.transaction,
+      newBalance: result.wallet.balance,
+      message: "خرید دوره با موفقیت انجام شد",
+    };
+  },
+
+  async getMyEnrollments(userId: string, query: ListMyCoursesQuery) {
+    const { skip, take, page, limit } = parsePagination(query);
+
+    const [items, total] = await Promise.all([
+      prisma.enrollment.findMany({
+        where: { userId },
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        include: enrollmentInclude,
+      }),
+      prisma.enrollment.count({ where: { userId } }),
+    ]);
+
+    const formattedItems = items.map(formatEnrollment);
+
+    return {
+      items: formattedItems,
+      pagination: buildPaginationMeta(total, page, limit),
+    };
+  },
+};
