@@ -7,6 +7,11 @@ import {
   buildPaginationMeta,
   parsePagination,
 } from "../../utils/pagination.js";
+import {
+  getMyReaction,
+  getReactionCounts,
+  getReactionCountsForList,
+} from "../../utils/reactionHelper.js";
 import { createSlug } from "../../utils/slug.util.js";
 import {
   courseInclude,
@@ -20,9 +25,15 @@ import {
   ListCoursesPublicQuery,
 } from "./course.validator.js";
 
-const formatCourse = (course: CourseWithRelations): CourseWithStats => {
+const formatCourse = (course: CourseWithRelations) => {
   const { _count, ...rest } = course;
-  return { ...rest, stats: _count };
+  return {
+    ...rest,
+    stats: {
+      enrollments: _count.enrollments,
+      comments: _count.comments,
+    },
+  };
 };
 
 const formatCourses = (courses: CourseWithRelations[]): CourseWithStats[] =>
@@ -249,10 +260,7 @@ export const courseService = {
     await prisma.course.delete({ where: { id } });
   },
 
-  async getPublicCourses(
-    query: ListCoursesPublicQuery,
-    userId?: string, // 🆕
-  ) {
+  async getPublicCourses(query: ListCoursesPublicQuery, userId?: string) {
     const { skip, take, page, limit } = parsePagination(query);
 
     const where: Prisma.CourseWhereInput = {
@@ -299,7 +307,6 @@ export const courseService = {
       }),
       prisma.course.count({ where }),
     ]);
-
     const formattedCourses = formatCourses(items);
 
     const coursesWithEnrollment = await addEnrollmentInfoToList(
@@ -307,8 +314,24 @@ export const courseService = {
       userId,
     );
 
+    const courseIds = formattedCourses.map((c) => c.id);
+    const reactionMap = await getReactionCountsForList(
+      "courseId",
+      courseIds,
+      userId,
+    );
+
+    const finalItems = coursesWithEnrollment.map((course) => ({
+      ...course,
+      reactions: reactionMap.get(course.id) ?? {
+        likes: 0,
+        dislikes: 0,
+        myReaction: null,
+      },
+    }));
+
     return {
-      items: coursesWithEnrollment,
+      items: finalItems,
       pagination: buildPaginationMeta(total, page, limit),
     };
   },
@@ -373,7 +396,22 @@ export const courseService = {
     }
 
     const formattedCourse = formatCourse(course);
+    const courseWithEnrollment = await addEnrollmentInfo(
+      formattedCourse,
+      userId,
+    );
 
-    return await addEnrollmentInfo(formattedCourse, userId);
+    const [counts, myReaction] = await Promise.all([
+      getReactionCounts("courseId", course.id),
+      getMyReaction("courseId", course.id, userId),
+    ]);
+
+    return {
+      ...courseWithEnrollment,
+      reactions: {
+        ...counts,
+        myReaction,
+      },
+    };
   },
 };

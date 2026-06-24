@@ -14,7 +14,6 @@ export const courseWithCount = {
     select: {
       enrollments: true,
       comments: true,
-      reactions: true,
     },
   },
 } satisfies Prisma.CourseInclude;
@@ -39,5 +38,8 @@ export type CourseWithRelations = Prisma.CourseGetPayload<{
 }>;
 
 export type CourseWithStats = Omit<CourseWithRelations, "_count"> & {
-  stats: CourseWithRelations["_count"];
+  stats: {
+    enrollments: number;
+    comments: number;
+  };
 };

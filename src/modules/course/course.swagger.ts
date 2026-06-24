@@ -22,7 +22,7 @@ export const courseSwagger = {
           {
             name: "category",
             in: "query",
-            schema: { type: "string", example: "فرانت-اند" },
+            schema: { type: "string"},
             description: "فیلتر بر اساس slug دسته‌بندی",
           },
           {
@@ -37,19 +37,19 @@ export const courseSwagger = {
           {
             name: "minPrice",
             in: "query",
-            schema: { type: "string", example: "0" },
+            schema: { type: "string" },
             description: "حداقل قیمت (به ریال)",
           },
           {
             name: "maxPrice",
             in: "query",
-            schema: { type: "string", example: "10000000" },
+            schema: { type: "string" },
             description: "حداکثر قیمت (به ریال)",
           },
           {
             name: "search",
             in: "query",
-            schema: { type: "string", example: "react" },
+            schema: { type: "string" },
             description: "جستجو در عنوان و توضیحات",
           },
           {

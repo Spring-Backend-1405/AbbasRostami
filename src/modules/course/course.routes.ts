@@ -4,6 +4,8 @@ import { authentication } from "../../middlewares/authentication.js";
 import { authorize } from "../../middlewares/authorization.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { toggleCourseReaction } from "../reaction/reaction.controller.js";
+import { toggleReactionSchema } from "../reaction/reaction.validator.js";
 import {
   createCourseController,
   deleteCourseController,
@@ -77,6 +79,13 @@ router.get(
   "/:slug",
   validate(getCourseBySlugSchema),
   asyncHandler(getCourseBySlugController),
+);
+
+router.post(
+  "/:id/reaction",
+  authentication,
+  validate(toggleReactionSchema),
+  asyncHandler(toggleCourseReaction),
 );
 
 export default router;
