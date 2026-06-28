@@ -4,7 +4,6 @@ import {
   buildPaginationMeta,
   parsePagination,
 } from "../../utils/pagination.js";
-import { walletService } from "../wallet/wallet.service.js";
 import {
   enrollmentInclude,
   EnrollmentWithRelations,
@@ -51,68 +50,35 @@ export const enrollmentService = {
       throw new AppError("شما قبلاً در این دوره ثبت‌نام کرده‌اید", 400);
     }
 
-    if (course.price === 0) {
-      const enrollment = await prisma.enrollment.create({
-        data: {
-          userId,
-          courseId: course.id,
-          pricePaid: 0,
-        },
-        include: {
-          course: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              imageUrl: true,
-              price: true,
-            },
-          },
-        },
-      });
-
-      return {
-        enrollment,
-        message: "با موفقیت در دوره رایگان ثبت‌نام شدید",
-      };
+    if (course.price > 0) {
+      throw new AppError(
+        "برای خرید دوره‌های پولی از سبد خرید استفاده کنید",
+        400,
+      );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const enrollment = await tx.enrollment.create({
-        data: {
-          userId,
-          courseId: course.id,
-          pricePaid: course.price,
-        },
-        include: {
-          course: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              imageUrl: true,
-              price: true,
-            },
+    const enrollment = await prisma.enrollment.create({
+      data: {
+        userId,
+        courseId: course.id,
+        pricePaid: 0,
+      },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            imageUrl: true,
+            price: true,
           },
         },
-      });
-
-      const { wallet, transaction } = await walletService.deductBalance(
-        userId,
-        course.price,
-        `خرید دوره: ${course.title}`,
-        course.id,
-        tx,
-      );
-
-      return { enrollment, wallet, transaction };
+      },
     });
 
     return {
-      enrollment: result.enrollment,
-      transaction: result.transaction,
-      newBalance: result.wallet.balance,
-      message: "خرید دوره با موفقیت انجام شد",
+      enrollment,
+      message: "با موفقیت در دوره رایگان ثبت‌نام شدید",
     };
   },
 

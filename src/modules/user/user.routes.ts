@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { uploadAvatar } from "../../config/multer.config.js";
+import { uploadAvatar } from "../../config/multer.js";
 import { authentication } from "../../middlewares/authentication.js";
-import { validate } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   deleteAvatarController,

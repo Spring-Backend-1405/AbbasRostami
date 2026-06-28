@@ -10,7 +10,6 @@ export const enrollmentInclude = {
         select: {
           enrollments: true,
           comments: true,
-          reactions: true,
         },
       },
     },

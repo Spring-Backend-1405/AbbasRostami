@@ -29,6 +29,7 @@ export const authService = {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
+
     if (existingUser) {
       throw new AppError("خطا در ثبت نام", 400, {
         email: "کاربری با این ایمیل قبلاً ثبت‌ نام کرده است",
@@ -48,6 +49,11 @@ export const authService = {
         name: data.name,
         verificationCode,
         verificationExpires,
+        wallet: {
+          create: {
+            balance: 0,
+          },
+        },
       },
     });
 
@@ -191,6 +197,6 @@ export const authService = {
         where: { id: decoded.id },
         data: { refreshToken: null },
       });
-    } catch (e) {}
+    } catch {}
   },
 };

@@ -121,13 +121,13 @@ export const categorySwagger = {
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "شماره صفحه (پیش‌فرض: 1)",
+            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "10" },
-            description: "تعداد در هر صفحه (پیش‌فرض: 10، حداکثر: 100)",
+            description: "limit",
           },
           {
             name: "show",
@@ -212,18 +212,7 @@ export const categorySwagger = {
               },
             },
           },
-          404: {
-            description: "دسته بندی یافت نشد.",
-            content: {
-              "application/json": {
-                example: {
-                  status: "error",
-                  message: "دسته بندی مورد نظر یافت نشد",
-                  code: 404,
-                },
-              },
-            },
-          },
+          404: { description: "Category not found." },
         },
       },
     },
@@ -303,18 +292,7 @@ export const categorySwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
-          404: {
-            description: "دسته بندی یافت نشد.",
-            content: {
-              "application/json": {
-                example: {
-                  status: "error",
-                  message: "دسته بندی مورد نظر یافت نشد",
-                  code: 404,
-                },
-              },
-            },
-          },
+          404: { description: "Category not found." },
         },
       },
       delete: {
@@ -348,18 +326,7 @@ export const categorySwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
-          404: {
-            description: "دسته بندی یافت نشد.",
-            content: {
-              "application/json": {
-                example: {
-                  status: "error",
-                  message: "دسته بندی مورد نظر یافت نشد",
-                  code: 404,
-                },
-              },
-            },
-          },
+          404: { description: "Category not found." },
         },
       },
     },
@@ -458,18 +425,7 @@ export const categorySwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
-          404: {
-            description: "دسته بندی یافت نشد.",
-            content: {
-              "application/json": {
-                example: {
-                  status: "error",
-                  message: "دسته بندی مورد نظر یافت نشد",
-                  code: 404,
-                },
-              },
-            },
-          },
+          404: { description: "Category not found." },
         },
       },
     },

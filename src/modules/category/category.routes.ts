@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authentication } from "../../middlewares/authentication.js";
-import { authorize } from "../../middlewares/authorization.middleware.js";
-import { validate } from "../../middlewares/validate.middleware.js";
+import { authorize } from "../../middlewares/authorization.js";
+import { validate } from "../../middlewares/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   createCategoryController,

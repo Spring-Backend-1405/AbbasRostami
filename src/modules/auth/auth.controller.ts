@@ -76,7 +76,10 @@ export const refreshController: RequestHandler = async (req, res, next) => {
 
   return res.status(200).json({
     status: "success",
-    data: { message: "توکن شما با موفقیت تمدید شد" },
+    data: {
+      message: "توکن شما با موفقیت تمدید شد",
+      accessToken,
+    },
   });
 };
 

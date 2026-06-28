@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authentication } from "../../middlewares/authentication.js";
-import { validate } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   enrollController,

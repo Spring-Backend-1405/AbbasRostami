@@ -166,13 +166,13 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "شماره صفحه",
+            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "10" },
-            description: "تعداد در هر صفحه",
+            description: "limit",
           },
           {
             name: "status",
@@ -195,7 +195,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
         ],
         responses: {
           200: {
-            description: "تاریخچه تراکنش‌ها با pagination.",
+            description: "تاریخچه تراکنش‌ها.",
             content: {
               "application/json": {
                 example: {
@@ -214,15 +214,11 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
                       },
                       {
                         id: "tx-uuid-2",
-                        amount: 500000,
+                        amount: 800000,
                         status: "SUCCESS",
                         type: "PURCHASE",
-                        description: "خرید دوره React پیشرفته",
-                        course: {
-                          id: "course-uuid",
-                          title: "آموزش React پیشرفته",
-                          slug: "آموزش-react-پیشرفته",
-                        },
+                        description: "پرداخت سفارش #b09dc6c8",
+                        course: null,
                         createdAt: "2026-01-14T15:00:00.000Z",
                       },
                     ],
@@ -240,7 +236,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
     "/api/wallet/admin/wallets": {
       get: {
         tags: ["Wallet"],
-        summary: "Get all wallets - Admin",
+        summary: "Get all wallets (Admin)",
         description:
           "Returns all users' wallets with filters and pagination. Admin access required.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
@@ -249,13 +245,13 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "شماره صفحه",
+            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "20" },
-            description: "تعداد در هر صفحه",
+            description: "limit",
           },
           {
             name: "minBalance",
@@ -278,7 +274,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
         ],
         responses: {
           200: {
-            description: "لیست کیف‌پول‌ها با pagination.",
+            description: "لیست کیف‌پول‌ها.",
             content: {
               "application/json": {
                 example: {
@@ -313,7 +309,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
     "/api/wallet/admin/transactions": {
       get: {
         tags: ["Wallet"],
-        summary: "Get all transactions - Admin",
+        summary: "Get all transactions (Admin)",
         description:
           "Returns all transactions across the platform with powerful filters. Admin access required.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
@@ -322,13 +318,13 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "شماره صفحه",
+            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "20" },
-            description: "تعداد در هر صفحه",
+            description: "limit",
           },
           {
             name: "status",

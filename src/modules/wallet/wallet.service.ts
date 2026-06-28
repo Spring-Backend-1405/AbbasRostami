@@ -8,7 +8,7 @@ import {
 import {
   requestPayment,
   verifyPayment as zarinpalVerify,
-} from "../../utils/zarinpal.util.js";
+} from "../../utils/zarinpal.js";
 import {
   ChargeWalletInput,
   ListAdminTransactionsQuery,
@@ -65,12 +65,13 @@ export const walletService = {
   },
 
   async chargeWallet(userId: string, data: ChargeWalletInput) {
-    await this.getOrCreateWallet(userId);
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true, phone: true },
-    });
+    const [_, user] = await Promise.all([
+      this.getOrCreateWallet(userId),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, phone: true },
+      }),
+    ]);
 
     if (!user) {
       throw new AppError("کاربر یافت نشد", 404);
@@ -79,6 +80,7 @@ export const walletService = {
     const zarinpalResult = await requestPayment({
       amount: data.amount,
       description: `شارژ کیف پول به مبلغ ${data.amount} ریال`,
+      callbackUrl: `${process.env.BACKEND_URL!}/api/wallet/verify`,
       email: user.email,
       mobile: user.phone || undefined,
     });
@@ -266,55 +268,6 @@ export const walletService = {
     return {
       items,
       pagination: buildPaginationMeta(total, page, limit),
-    };
-  },
-
-  async deductBalance(
-    userId: string,
-    amount: number,
-    description: string,
-    courseId: string,
-    tx: Prisma.TransactionClient,
-  ) {
-    const wallet = await tx.wallet.findUnique({
-      where: { userId },
-    });
-
-    if (!wallet) {
-      throw new AppError("کیف پول یافت نشد", 404);
-    }
-
-    if (wallet.balance < amount) {
-      throw new AppError(
-        `موجودی کیف پول کافی نیست. موجودی فعلی: ${wallet.balance} ریال`,
-        400,
-        {
-          balance: `موجودی فعلی: ${wallet.balance} ریال`,
-        },
-      );
-    }
-
-    const updatedWallet = await tx.wallet.update({
-      where: { userId },
-      data: {
-        balance: { decrement: amount },
-      },
-    });
-
-    const transaction = await tx.transaction.create({
-      data: {
-        amount,
-        type: "PURCHASE",
-        status: "SUCCESS",
-        description,
-        userId,
-        courseId,
-      },
-    });
-
-    return {
-      wallet: updatedWallet,
-      transaction,
     };
   },
 };

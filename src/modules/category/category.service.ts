@@ -5,7 +5,7 @@ import {
   buildPaginationMeta,
   parsePagination,
 } from "../../utils/pagination.js";
-import { createSlug } from "../../utils/slug.util.js";
+import { createSlug } from "../../utils/slug.js";
 import {
   CreateCategoryInput,
   ListCategoriesAdminQuery,
@@ -128,6 +128,11 @@ export const categoryService = {
       updateData.description = data.description;
     }
 
+    // اگه هیچ چیزی برای آپدیت نیست
+    if (Object.keys(updateData).length === 0) {
+      throw new AppError("حداقل یک فیلد برای ویرایش ارسال کنید", 400);
+    }
+
     try {
       return await prisma.category.update({
         where: { id },
@@ -135,10 +140,10 @@ export const categoryService = {
       });
     } catch (error) {
       handleUniqueError(error);
+      throw error;
     }
   },
 
-  // ✅ ساده‌سازی شد
   async toggleVisibility(id: string, show: boolean) {
     return prisma.$transaction(async (tx) => {
       const existing = await tx.category.findUnique({ where: { id } });
@@ -159,7 +164,6 @@ export const categoryService = {
         data: { show },
       });
 
-      // اگه غیرفعال می‌کنیم، دوره‌ها و پست‌ها رو هم unpublish کن
       if (!show) {
         await tx.course.updateMany({
           where: { categoryId: id, published: true },

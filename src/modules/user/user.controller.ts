@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { userService } from "./user.service.js";
 
 export const getProfileController: RequestHandler = async (req, res) => {
-  const userId = String(req.user!.id);
+  const userId = req.user!.id;
   const profile = await userService.getProfile(userId);
 
   return res.status(200).json({
@@ -14,19 +14,29 @@ export const getProfileController: RequestHandler = async (req, res) => {
 };
 
 export const updateProfileController: RequestHandler = async (req, res) => {
-  const userId = String(req.user!.id);
+  const userId = req.user!.id;
   const { name, phone } = req.body;
 
-  let avatarPath: string | undefined = undefined;
+  let avatarPath: string | undefined;
   if (req.file) {
     avatarPath = `/uploads/avatars/${req.file.filename}`;
   }
 
-  const updatedProfile = await userService.updateProfile(userId, {
-    name,
-    phone,
-    avatar: avatarPath,
-  });
+  if (!name && !phone && !avatarPath) {
+    return res.status(400).json({
+      status: "fail",
+      data: {
+        message: "حداقل یک فیلد برای ویرایش ارسال کنید",
+      },
+    });
+  }
+
+  const updateData: { name?: string; phone?: string; avatar?: string } = {};
+  if (name) updateData.name = name;
+  if (phone) updateData.phone = phone;
+  if (avatarPath) updateData.avatar = avatarPath;
+
+  const updatedProfile = await userService.updateProfile(userId, updateData);
 
   return res.status(200).json({
     status: "success",
@@ -38,7 +48,7 @@ export const updateProfileController: RequestHandler = async (req, res) => {
 };
 
 export const deleteAvatarController: RequestHandler = async (req, res) => {
-  const userId = String(req.user!.id);
+  const userId = req.user!.id;
   await userService.deleteAvatar(userId);
 
   return res.status(200).json({

@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { validate } from "../../middlewares/validate.middleware.js";
+import {
+  loginLimiter,
+  registerLimiter,
+} from "../../middlewares/authLimiter.js";
+import { validate } from "../../middlewares/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   loginController,
@@ -18,7 +22,7 @@ const router = Router();
 
 router.post(
   "/register",
-  // registerLimiter,
+  registerLimiter,
   validate(registerSchema),
   asyncHandler(registerController),
 );
@@ -29,7 +33,7 @@ router.post(
 );
 router.post(
   "/login",
-  // loginLimiter,
+  loginLimiter,
   validate(loginSchema),
   asyncHandler(loginController),
 );
