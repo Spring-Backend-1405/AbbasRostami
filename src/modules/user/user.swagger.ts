@@ -29,15 +29,8 @@ export const userSwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           404: {
-            description: "کاربر مورد نظر یافت نشد.",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: { message: "کاربر مورد نظر یافت نشد" },
-                },
-              },
-            },
+            description:
+              "User not found. This should not happen for an authenticated user.",
           },
         },
       },
