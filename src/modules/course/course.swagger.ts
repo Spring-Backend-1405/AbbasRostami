@@ -22,7 +22,7 @@ export const courseSwagger = {
           {
             name: "category",
             in: "query",
-            schema: { type: "string"},
+            schema: { type: "string" },
             description: "فیلتر بر اساس slug دسته‌بندی",
           },
           {
@@ -91,7 +91,6 @@ export const courseSwagger = {
                         imageUrl: "/uploads/courses/course-uuid.jpg",
                         level: "INTERMEDIATE",
                         published: true,
-                        categoryId: "cat-uuid",
                         createdAt: "2026-01-15T14:00:00.000Z",
                         updatedAt: "2026-01-15T14:00:00.000Z",
                         category: {
@@ -102,7 +101,11 @@ export const courseSwagger = {
                         stats: {
                           enrollments: 25,
                           comments: 12,
-                          reactions: 45,
+                        },
+                        reactions: {
+                          likes: 45,
+                          dislikes: 3,
+                          myReaction: null,
                         },
                       },
                     ],
@@ -170,7 +173,7 @@ export const courseSwagger = {
                     type: "string",
                     format: "uuid",
                     example: "d3b07384-d113-4956-a5cc-484443028456",
-                    description: "شناسه دسته‌بندی (اختیاری)",
+                    description: "id",
                   },
                   published: {
                     type: "boolean",
@@ -180,8 +183,7 @@ export const courseSwagger = {
                   image: {
                     type: "string",
                     format: "binary",
-                    description:
-                      "فایل تصویر دوره (JPG, PNG, WEBP - حداکثر 5MB)",
+                    description: "Image Course",
                   },
                 },
               },
@@ -206,7 +208,6 @@ export const courseSwagger = {
                       imageUrl: "/uploads/courses/course-uuid.jpg",
                       level: "INTERMEDIATE",
                       published: true,
-                      categoryId: "cat-uuid",
                       createdAt: "2026-01-15T14:00:00.000Z",
                       updatedAt: "2026-01-15T14:00:00.000Z",
                       category: {
@@ -217,7 +218,6 @@ export const courseSwagger = {
                       stats: {
                         enrollments: 0,
                         comments: 0,
-                        reactions: 0,
                       },
                     },
                   },
@@ -226,42 +226,37 @@ export const courseSwagger = {
             },
           },
           400: {
-            description:
-              "Validation error, duplicate title, or invalid category",
-            content: {
-              "application/json": {
-                examples: {
-                  validation: {
-                    summary: "خطای ولیدیشن",
-                    value: {
-                      status: "fail",
-                      data: {
-                        title: "عنوان دوره باید حداقل ۳ کاراکتر باشد",
-                        price: "قیمت باید عدد باشد",
-                      },
-                    },
-                  },
-                  duplicateTitle: {
-                    summary: "عنوان تکراری",
-                    value: {
-                      status: "fail",
-                      data: {
-                        title: "این عنوان قبلاً استفاده شده است",
-                      },
-                    },
-                  },
-                  invalidCategory: {
-                    summary: "دسته‌بندی نامعتبر",
-                    value: {
-                      status: "fail",
-                      data: {
-                        categoryId: "این دسته‌بندی وجود ندارد",
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:\n
+- title:
+  - Must not be empty.
+  - Must be a string.
+  - Min length: 3.
+  - Max length: 150.\n
+- description:
+  - Optional.
+  - Must be a string.
+  - Max length: 5000.\n
+- price:
+  - Must be a number.
+  - Must be an integer.
+  - Minimum: 0.
+  - Maximum: 1000000000.\n
+- level:
+  - Optional.
+  - Must be one of: BEGINNER, INTERMEDIATE, ADVANCED.
+  - Default: BEGINNER.\n
+- categoryId:
+  - Optional.
+  - Must be a valid UUID v4.\n
+- published:
+  - Optional.
+  - Must be a boolean.
+  - Default: false.\n
+- image:
+  - Optional.
+  - Max size: 5 MB.
+  - Allowed formats: .jpg, .jpeg, .png, .webp.\n
+- Duplicate title or invalid category may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
@@ -280,13 +275,13 @@ export const courseSwagger = {
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "شماره صفحه",
+            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "10" },
-            description: "تعداد در هر صفحه",
+            description: "limit",
           },
           {
             name: "category",
@@ -349,7 +344,6 @@ export const courseSwagger = {
                         imageUrl: "/uploads/courses/course-uuid.jpg",
                         level: "INTERMEDIATE",
                         published: false,
-                        categoryId: "cat-uuid",
                         createdAt: "2026-01-15T14:00:00.000Z",
                         updatedAt: "2026-01-15T14:00:00.000Z",
                         category: {
@@ -360,7 +354,6 @@ export const courseSwagger = {
                         stats: {
                           enrollments: 0,
                           comments: 0,
-                          reactions: 0,
                         },
                       },
                     ],
@@ -387,8 +380,8 @@ export const courseSwagger = {
             name: "slug",
             in: "path",
             required: true,
-            schema: { type: "string", example: "آموزش-react-پیشرفته" },
-            description: "slug دوره (فارسی یا انگلیسی)",
+            schema: { type: "string" },
+            description: "slug",
           },
         ],
         responses: {
@@ -408,7 +401,6 @@ export const courseSwagger = {
                       imageUrl: "/uploads/courses/course-uuid.jpg",
                       level: "INTERMEDIATE",
                       published: true,
-                      categoryId: "cat-uuid",
                       createdAt: "2026-01-15T14:00:00.000Z",
                       updatedAt: "2026-01-15T14:00:00.000Z",
                       category: {
@@ -419,7 +411,11 @@ export const courseSwagger = {
                       stats: {
                         enrollments: 125,
                         comments: 45,
-                        reactions: 230,
+                      },
+                      reactions: {
+                        likes: 45,
+                        dislikes: 3,
+                        myReaction: null,
                       },
                     },
                   },
@@ -427,7 +423,7 @@ export const courseSwagger = {
               },
             },
           },
-          404: { description: "دوره یافت نشد." },
+          404: { description: "Course not found." },
         },
       },
     },
@@ -445,7 +441,7 @@ export const courseSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "UUID دوره",
+            description: "id",
           },
         ],
         requestBody: {
@@ -485,7 +481,6 @@ export const courseSwagger = {
                   image: {
                     type: "string",
                     format: "binary",
-                    description: "تصویر جدید (تصویر قبلی حذف می‌شود)",
                   },
                 },
               },
@@ -510,7 +505,6 @@ export const courseSwagger = {
                       imageUrl: "/uploads/courses/course-new-uuid.jpg",
                       level: "INTERMEDIATE",
                       published: true,
-                      categoryId: "cat-uuid",
                       createdAt: "2026-01-15T14:00:00.000Z",
                       updatedAt: "2026-01-15T15:00:00.000Z",
                       category: {
@@ -521,7 +515,6 @@ export const courseSwagger = {
                       stats: {
                         enrollments: 125,
                         comments: 45,
-                        reactions: 230,
                       },
                     },
                   },
@@ -530,38 +523,43 @@ export const courseSwagger = {
             },
           },
           400: {
-            description:
-              "Validation error, duplicate title, or invalid category",
-            content: {
-              "application/json": {
-                examples: {
-                  validation: {
-                    summary: "خطای ولیدیشن",
-                    value: {
-                      status: "fail",
-                      data: {
-                        title: "عنوان دوره باید حداقل ۳ کاراکتر باشد",
-                      },
-                    },
-                  },
-                  duplicateTitle: {
-                    summary: "عنوان تکراری",
-                    value: {
-                      status: "fail",
-                      data: {
-                        title: "این عنوان قبلاً استفاده شده است",
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:\n
+- id (path):
+  - Must be a valid UUID v4.\n
+- title:
+  - Optional.
+  - Must be a string.
+  - Min length: 3.
+  - Max length: 150.\n
+- description:
+  - Optional.
+  - Must be a string.
+  - Max length: 5000.\n
+- price:
+  - Optional.
+  - Must be a number.
+  - Must be an integer.
+  - Minimum: 0.
+  - Maximum: 1000000000.\n
+- level:
+  - Optional.
+  - Must be one of: BEGINNER, INTERMEDIATE, ADVANCED.\n
+- categoryId:
+  - Optional.
+  - Must be a valid UUID v4 or null.\n
+- image:
+  - Optional.
+  - Max size: 5 MB.
+  - Allowed formats: .jpg, .jpeg, .png, .webp.\n
+- Duplicate title or invalid category may also return 400.\n
+- At least one field is required.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
-          404: { description: "دوره یافت نشد." },
+          404: { description: "Course not found." },
         },
       },
+
       delete: {
         tags: ["Course"],
         summary: "Delete course (Admin)",
@@ -574,7 +572,7 @@ export const courseSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "UUID دوره",
+            description: "id",
           },
         ],
         responses: {
@@ -593,7 +591,7 @@ export const courseSwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
-          404: { description: "دوره یافت نشد." },
+          404: { description: "Course not found." },
         },
       },
     },
@@ -611,7 +609,7 @@ export const courseSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "UUID دوره",
+            description: "id",
           },
         ],
         requestBody: {
@@ -659,7 +657,6 @@ export const courseSwagger = {
                           stats: {
                             enrollments: 25,
                             comments: 12,
-                            reactions: 45,
                           },
                         },
                       },
@@ -686,7 +683,6 @@ export const courseSwagger = {
                           stats: {
                             enrollments: 25,
                             comments: 12,
-                            reactions: 45,
                           },
                         },
                       },
@@ -741,7 +737,7 @@ export const courseSwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
-          404: { description: "دوره یافت نشد." },
+          404: { description: "Course not found." },
         },
       },
     },

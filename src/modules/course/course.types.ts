@@ -37,7 +37,10 @@ export type CourseWithRelations = Prisma.CourseGetPayload<{
   include: typeof courseInclude;
 }>;
 
-export type CourseWithStats = Omit<CourseWithRelations, "_count"> & {
+export type CourseWithStats = Omit<
+  CourseWithRelations,
+  "_count" | "categoryId"
+> & {
   stats: {
     enrollments: number;
     comments: number;

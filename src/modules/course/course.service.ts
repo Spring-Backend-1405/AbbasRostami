@@ -12,7 +12,7 @@ import {
   getReactionCounts,
   getReactionCountsForList,
 } from "../../utils/reactionHelper.js";
-import { createSlug } from "../../utils/slug.util.js";
+import { createSlug } from "../../utils/slug.js";
 import {
   courseInclude,
   CourseWithRelations,
@@ -26,7 +26,7 @@ import {
 } from "./course.validator.js";
 
 const formatCourse = (course: CourseWithRelations) => {
-  const { _count, ...rest } = course;
+  const { _count, categoryId, ...rest } = course;
   return {
     ...rest,
     stats: {
@@ -38,56 +38,6 @@ const formatCourse = (course: CourseWithRelations) => {
 
 const formatCourses = (courses: CourseWithRelations[]): CourseWithStats[] =>
   courses.map(formatCourse);
-
-const addEnrollmentInfo = async (course: CourseWithStats, userId?: string) => {
-  if (!userId) {
-    return { ...course, isEnrolled: false, enrollment: null };
-  }
-
-  const enrollment = await prisma.enrollment.findUnique({
-    where: {
-      userId_courseId: {
-        userId,
-        courseId: course.id,
-      },
-    },
-    select: {
-      id: true,
-      pricePaid: true,
-      createdAt: true,
-    },
-  });
-
-  return {
-    ...course,
-    isEnrolled: !!enrollment,
-    enrollment: enrollment || null,
-  };
-};
-
-const addEnrollmentInfoToList = async (
-  courses: CourseWithStats[],
-  userId?: string,
-) => {
-  if (!userId || courses.length === 0) {
-    return courses.map((c) => ({ ...c, isEnrolled: false }));
-  }
-
-  const enrollments = await prisma.enrollment.findMany({
-    where: {
-      userId,
-      courseId: { in: courses.map((c) => c.id) },
-    },
-    select: { courseId: true },
-  });
-
-  const enrolledCourseIds = new Set(enrollments.map((e) => e.courseId));
-
-  return courses.map((course) => ({
-    ...course,
-    isEnrolled: enrolledCourseIds.has(course.id),
-  }));
-};
 
 const handleUniqueError = (error: unknown): never => {
   if (
@@ -115,7 +65,14 @@ const validateCategoryExists = async (categoryId: string) => {
 
 const removePhysicalFile = (relativeFilePath: string) => {
   try {
-    const filePath = path.join(process.cwd(), "public", relativeFilePath);
+    const filePath = path.resolve(process.cwd(), "public", relativeFilePath);
+    const safeDir = path.resolve(process.cwd(), "public", "uploads");
+
+    if (!filePath.startsWith(safeDir)) {
+      console.warn("⚠️ تلاش برای حذف فایل خارج از مسیر مجاز:", filePath);
+      return;
+    }
+
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -182,6 +139,9 @@ export const courseService = {
     }
     if (data.level !== undefined) {
       updateData.level = data.level;
+    }
+    if (data.published !== undefined) {
+      updateData.published = data.published;
     }
     if (data.categoryId !== undefined) {
       updateData.category = data.categoryId
@@ -308,26 +268,39 @@ export const courseService = {
       prisma.course.count({ where }),
     ]);
     const formattedCourses = formatCourses(items);
-
-    const coursesWithEnrollment = await addEnrollmentInfoToList(
-      formattedCourses,
-      userId,
-    );
-
     const courseIds = formattedCourses.map((c) => c.id);
-    const reactionMap = await getReactionCountsForList(
-      "courseId",
-      courseIds,
-      userId,
-    );
 
-    const finalItems = coursesWithEnrollment.map((course) => ({
+    const [enrolledIds, reactionMap, favoriteIds] = await Promise.all([
+      userId && courseIds.length > 0
+        ? prisma.enrollment
+            .findMany({
+              where: { userId, courseId: { in: courseIds } },
+              select: { courseId: true },
+            })
+            .then((e) => new Set(e.map((x) => x.courseId)))
+        : Promise.resolve(new Set<string>()),
+
+      getReactionCountsForList("courseId", courseIds, userId),
+
+      userId && courseIds.length > 0
+        ? prisma.courseFavorite
+            .findMany({
+              where: { userId, courseId: { in: courseIds } },
+              select: { courseId: true },
+            })
+            .then((f) => new Set(f.map((x) => x.courseId)))
+        : Promise.resolve(new Set<string>()),
+    ]);
+
+    const finalItems = formattedCourses.map((course) => ({
       ...course,
+      isEnrolled: enrolledIds.has(course.id),
       reactions: reactionMap.get(course.id) ?? {
         likes: 0,
         dislikes: 0,
         myReaction: null,
       },
+      isFavorite: favoriteIds.has(course.id),
     }));
 
     return {
@@ -396,22 +369,31 @@ export const courseService = {
     }
 
     const formattedCourse = formatCourse(course);
-    const courseWithEnrollment = await addEnrollmentInfo(
-      formattedCourse,
-      userId,
-    );
 
-    const [counts, myReaction] = await Promise.all([
+    // همه query ها موازی
+    const [enrollment, counts, myReaction, favorite] = await Promise.all([
+      userId
+        ? prisma.enrollment.findUnique({
+            where: { userId_courseId: { userId, courseId: course.id } },
+            select: { id: true, pricePaid: true, createdAt: true },
+          })
+        : Promise.resolve(null),
       getReactionCounts("courseId", course.id),
       getMyReaction("courseId", course.id, userId),
+      userId
+        ? prisma.courseFavorite.findUnique({
+            where: { userId_courseId: { userId, courseId: course.id } },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
     ]);
 
     return {
-      ...courseWithEnrollment,
-      reactions: {
-        ...counts,
-        myReaction,
-      },
+      ...formattedCourse,
+      isEnrolled: !!enrollment,
+      enrollment: enrollment || null,
+      reactions: { ...counts, myReaction },
+      isFavorite: !!favorite,
     };
   },
 };
