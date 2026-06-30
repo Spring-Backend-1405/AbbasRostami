@@ -19,7 +19,7 @@ export const updateProfileController: RequestHandler = async (req, res) => {
 
   let avatarPath: string | undefined;
   if (req.file) {
-    avatarPath = `/uploads/avatars/${req.file.filename}`;
+    avatarPath = req.file.path;
   }
 
   if (!name && !phone && !avatarPath) {

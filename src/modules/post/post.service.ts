@@ -1,8 +1,7 @@
-import fs from "fs";
-import path from "path";
 import { Prisma } from "../../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import { removeCloudinaryImage } from "../../utils/cloudinary.js";
 import {
   buildPaginationMeta,
   parsePagination,
@@ -98,17 +97,6 @@ const validateCategoryExists = async (categoryId: string) => {
   }
 };
 
-const removePhysicalFile = (relativeFilePath: string) => {
-  try {
-    const filePath = path.join(process.cwd(), "public", relativeFilePath);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (err) {
-    console.error("❌ خطا در حذف فایل:", err);
-  }
-};
-
 export const postService = {
   async createPost(data: CreatePostInputWithImage) {
     if (data.categoryId) {
@@ -131,7 +119,7 @@ export const postService = {
       return formatPost(post);
     } catch (error) {
       if (data.imageUrl) {
-        removePhysicalFile(data.imageUrl);
+        removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -143,7 +131,7 @@ export const postService = {
 
     if (!existing) {
       if (data.imageUrl) {
-        removePhysicalFile(data.imageUrl);
+        removeCloudinaryImage(data.imageUrl);
       }
       throw new AppError("پست مورد نظر یافت نشد", 404);
     }
@@ -173,7 +161,7 @@ export const postService = {
 
     if (data.imageUrl) {
       if (existing.imageUrl) {
-        removePhysicalFile(existing.imageUrl);
+        removeCloudinaryImage(existing.imageUrl);
       }
       updateData.imageUrl = data.imageUrl;
     }
@@ -188,7 +176,7 @@ export const postService = {
       return formatPost(post);
     } catch (error) {
       if (data.imageUrl) {
-        removePhysicalFile(data.imageUrl);
+        removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -236,7 +224,7 @@ export const postService = {
     }
 
     if (existing.imageUrl) {
-      removePhysicalFile(existing.imageUrl);
+      removeCloudinaryImage(existing.imageUrl);
     }
 
     await prisma.post.delete({ where: { id } });

@@ -6,7 +6,7 @@ import { ListPostsAdminQuery, ListPostsPublicQuery } from "./post.validator.js";
 export const createPostController: RequestHandler = async (req, res) => {
   let imageUrl: string | undefined;
   if (req.file) {
-    imageUrl = `/uploads/posts/${req.file.filename}`;
+    imageUrl = req.file.path;
   }
 
   const post = await postService.createPost({
@@ -28,7 +28,7 @@ export const updatePostController: RequestHandler = async (req, res) => {
 
   let imageUrl: string | undefined;
   if (req.file) {
-    imageUrl = `/uploads/posts/${req.file.filename}`;
+    imageUrl = req.file.path;
   }
 
   const post = await postService.updatePost(id, {

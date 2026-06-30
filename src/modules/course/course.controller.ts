@@ -9,7 +9,7 @@ import {
 export const createCourseController: RequestHandler = async (req, res) => {
   let imageUrl: string | undefined = undefined;
   if (req.file) {
-    imageUrl = `/uploads/courses/${req.file.filename}`;
+    imageUrl = req.file.path;
   }
 
   const course = await courseService.createCourse({
@@ -31,7 +31,7 @@ export const updateCourseController: RequestHandler = async (req, res) => {
 
   let imageUrl: string | undefined = undefined;
   if (req.file) {
-    imageUrl = `/uploads/courses/${req.file.filename}`;
+    imageUrl = req.file.path;
   }
 
   const course = await courseService.updateCourse(id, {

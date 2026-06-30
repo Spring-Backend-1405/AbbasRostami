@@ -1,26 +1,7 @@
-import fs from "fs";
-import path from "path";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import { removeCloudinaryImage } from "../../utils/cloudinary.js";
 import { UpdateProfileInput } from "./user.validator.js";
-
-const removePhysicalFile = (relativeFilePath: string) => {
-  try {
-    const filePath = path.resolve(process.cwd(), "public", relativeFilePath);
-    const safeDir = path.resolve(process.cwd(), "public", "uploads");
-
-    if (!filePath.startsWith(safeDir)) {
-      console.warn("⚠️ تلاش برای حذف فایل خارج از مسیر مجاز:", filePath);
-      return;
-    }
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (err) {
-    console.error("❌ خطا در حذف فایل:", err);
-  }
-};
 
 export const userService = {
   async getProfile(userId: string) {
@@ -53,7 +34,7 @@ export const userService = {
       });
 
       if (currentUser?.avatar) {
-        removePhysicalFile(currentUser.avatar);
+        removeCloudinaryImage(currentUser.avatar);
       }
     }
 
@@ -73,7 +54,7 @@ export const userService = {
     });
 
     if (user?.avatar) {
-      removePhysicalFile(user.avatar);
+      removeCloudinaryImage(user.avatar);
     }
 
     return prisma.user.update({

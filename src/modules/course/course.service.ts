@@ -1,8 +1,7 @@
-import fs from "fs";
-import path from "path";
 import { Prisma } from "../../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import { removeCloudinaryImage } from "../../utils/cloudinary.js";
 import {
   buildPaginationMeta,
   parsePagination,
@@ -63,24 +62,6 @@ const validateCategoryExists = async (categoryId: string) => {
   }
 };
 
-const removePhysicalFile = (relativeFilePath: string) => {
-  try {
-    const filePath = path.resolve(process.cwd(), "public", relativeFilePath);
-    const safeDir = path.resolve(process.cwd(), "public", "uploads");
-
-    if (!filePath.startsWith(safeDir)) {
-      console.warn("⚠️ تلاش برای حذف فایل خارج از مسیر مجاز:", filePath);
-      return;
-    }
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (err) {
-    console.error("❌ خطا در حذف فایل:", err);
-  }
-};
-
 export const courseService = {
   async createCourse(data: CreateCourseInputWithImage) {
     if (data.categoryId) {
@@ -105,7 +86,7 @@ export const courseService = {
       return formatCourse(course);
     } catch (error) {
       if (data.imageUrl) {
-        removePhysicalFile(data.imageUrl);
+        removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -116,7 +97,7 @@ export const courseService = {
     const existing = await prisma.course.findUnique({ where: { id } });
     if (!existing) {
       if (data.imageUrl) {
-        removePhysicalFile(data.imageUrl);
+        removeCloudinaryImage(data.imageUrl);
       }
       throw new AppError("دوره مورد نظر یافت نشد", 404);
     }
@@ -151,7 +132,7 @@ export const courseService = {
 
     if (data.imageUrl) {
       if (existing.imageUrl) {
-        removePhysicalFile(existing.imageUrl);
+        removeCloudinaryImage(existing.imageUrl);
       }
       updateData.imageUrl = data.imageUrl;
     }
@@ -166,7 +147,7 @@ export const courseService = {
       return formatCourse(course);
     } catch (error) {
       if (data.imageUrl) {
-        removePhysicalFile(data.imageUrl);
+        removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -214,7 +195,7 @@ export const courseService = {
     }
 
     if (existing.imageUrl) {
-      removePhysicalFile(existing.imageUrl);
+      removeCloudinaryImage(existing.imageUrl);
     }
 
     await prisma.course.delete({ where: { id } });
@@ -370,7 +351,6 @@ export const courseService = {
 
     const formattedCourse = formatCourse(course);
 
-    // همه query ها موازی
     const [enrollment, counts, myReaction, favorite] = await Promise.all([
       userId
         ? prisma.enrollment.findUnique({
