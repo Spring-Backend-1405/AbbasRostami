@@ -108,3 +108,111 @@ export const logoutController: RequestHandler = async (req, res) => {
     },
   });
 };
+
+export const forgotPasswordController: RequestHandler = async (req, res) => {
+  const result = await authService.forgotPassword(req.body);
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const resetPasswordController: RequestHandler = async (req, res) => {
+  const result = await authService.resetPassword(req.body);
+
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const resendVerificationController: RequestHandler = async (
+  req,
+  res,
+) => {
+  const result = await authService.resendVerification(req.body);
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const resendResetCodeController: RequestHandler = async (req, res) => {
+  const result = await authService.resendResetCode(req.body);
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const changePasswordController: RequestHandler = async (req, res) => {
+  const userId = req.user!.id;
+  const result = await authService.changePassword(userId, req.body);
+
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const requestChangeEmailController: RequestHandler = async (
+  req,
+  res,
+) => {
+  const userId = req.user!.id;
+  const result = await authService.requestChangeEmail(userId, req.body);
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const verifyChangeEmailController: RequestHandler = async (req, res) => {
+  const userId = req.user!.id;
+  const result = await authService.verifyChangeEmail(userId, req.body);
+
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
