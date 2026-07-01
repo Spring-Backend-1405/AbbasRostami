@@ -1,36 +1,60 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./config/swagger.config.js";
+import { swaggerSpec } from "./config/swagger.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import cartRoutes from "./modules/cart/cart.routes.js";
 import categoryRoutes from "./modules/category/category.routes.js";
 import commentRoutes from "./modules/comment/comment.routes.js";
 import courseRoutes from "./modules/course/course.routes.js";
+import discountRoutes from "./modules/discount/discount.routes.js";
 import enrollmentRoutes from "./modules/enrollment/enrollment.routes.js";
 import favoriteRoutes from "./modules/favorite/favorite.routes.js";
+import healthRoutes from "./modules/health/health.routes.js";
 import orderRoutes from "./modules/order/order.routes.js";
+import overviewRoutes from "./modules/overview/overview.routes.js";
 import postRoutes from "./modules/post/post.routes.js";
 import searchRoutes from "./modules/search/search.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
 import walletRoutes from "./modules/wallet/wallet.routes.js";
+
 const app = express();
 
+// ─── Trust proxy
+app.set("trust proxy", 1);
+
+// ─── Logging
 const morganFormat = process.env.NODE_ENV === "production" ? "combined" : "dev";
 app.use(morgan(morganFormat));
-app.use(express.static("public"));
-app.use(cookieParser());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// ─── Security
 app.use(helmet());
 
+// ─── CORS
+const allowedOrigins = [
+  process.env.BACKEND_URL || "http://localhost:3000",
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  ...(process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
+    : []),
+];
+
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://localhost:5173"],
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -41,50 +65,50 @@ const corsOptions = {
     "X-RateLimit-Remaining",
   ],
 };
-
 app.use(cors(corsOptions));
 
-// const globalLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000,
-//   limit: 1000,
-//   standardHeaders: true,
-//   legacyHeaders: false,
-//   message: {
-//     status: "fail",
-//     data: {
-//       message:
-//         "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً بعداً تلاش کنید.",
-//     },
-//   },
-// });
+// ─── Body parser
+app.use(cookieParser());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// app.use(globalLimiter);
+// ─── Static files
+app.use(express.static("public"));
 
-const swaggerOptions = {
-  swaggerOptions: {
-    filter: true,
-    displayRequestDuration: true,
-    persistAuthorization: true,
-    docExpansion: "none",
+// ─── Rate limiting (global)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: "fail",
+    data: {
+      message:
+        "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً بعداً تلاش کنید.",
+    },
   },
-};
+});
+app.use(globalLimiter);
 
+// ─── Swagger
 app.use(
   "/api-docs",
   swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, swaggerOptions),
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      filter: true,
+      displayRequestDuration: true,
+      persistAuthorization: true,
+      docExpansion: "none",
+    },
+  }),
 );
 
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV,
-  });
-});
+// ─── Health check
+app.use("/health", healthRoutes);
 
+// ─── API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -97,7 +121,10 @@ app.use("/api/posts", postRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/discounts", discountRoutes);
+app.use("/api/overview", overviewRoutes);
 
+// ─── 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     status: "fail",
@@ -107,6 +134,7 @@ app.use((req, res) => {
   });
 });
 
+// ─── Global Error Handler
 app.use(errorHandler);
 
 export default app;
