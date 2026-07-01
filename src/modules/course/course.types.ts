@@ -1,4 +1,4 @@
-import { Prisma } from "../../../generated/prisma/client.js";
+import { Prisma } from "../../generated/prisma/client.js";
 import { CreateCourseInput, UpdateCourseInput } from "./course.validator.js";
 
 export type CreateCourseInputWithImage = CreateCourseInput & {

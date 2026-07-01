@@ -20,10 +20,17 @@ export const courseSwagger = {
             description: "limit ( max:100 )",
           },
           {
-            name: "category",
+            name: "categories",
             in: "query",
-            schema: { type: "string" },
-            description: "فیلتر بر اساس slug دسته‌بندی",
+            schema: {
+              type: "array",
+              items: { type: "string" },
+            },
+            style: "form",
+            explode: true,
+            description:
+              "فیلتر بر اساس چند دسته با slug. مثال: ?categories=frontend&categories=backend",
+            example: ["frontend", "backend"],
           },
           {
             name: "level",
@@ -173,7 +180,6 @@ export const courseSwagger = {
                     type: "string",
                     format: "uuid",
                     example: "d3b07384-d113-4956-a5cc-484443028456",
-                    description: "id",
                   },
                   published: {
                     type: "boolean",
@@ -183,7 +189,6 @@ export const courseSwagger = {
                   image: {
                     type: "string",
                     format: "binary",
-                    description: "Image Course",
                   },
                 },
               },
@@ -192,7 +197,7 @@ export const courseSwagger = {
         },
         responses: {
           201: {
-            description: "دوره با موفقیت ایجاد شد.",
+            description: "Course is created successfully.",
             content: {
               "application/json": {
                 example: {
@@ -284,10 +289,17 @@ export const courseSwagger = {
             description: "limit",
           },
           {
-            name: "category",
+            name: "categories",
             in: "query",
-            schema: { type: "string" },
-            description: "فیلتر بر اساس slug دسته",
+            schema: {
+              type: "array",
+              items: { type: "string" },
+            },
+            style: "form",
+            explode: true,
+            description:
+              "فیلتر بر اساس چند  دسته با  slug. مثال: ?categories=frontend&categories=backend",
+            example: ["frontend", "backend"],
           },
           {
             name: "level",
@@ -296,19 +308,19 @@ export const courseSwagger = {
               type: "string",
               enum: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
             },
-            description: "فیلتر بر اساس سطح",
+            description: "Filter by Level",
           },
           {
             name: "published",
             in: "query",
             schema: { type: "string", enum: ["true", "false"] },
-            description: "فیلتر بر اساس وضعیت انتشار",
+            description: "Filter by published status",
           },
           {
             name: "search",
             in: "query",
             schema: { type: "string" },
-            description: "جستجو در عنوان و توضیحات",
+            description: "Search in title and description",
           },
           {
             name: "sortBy",
@@ -317,18 +329,16 @@ export const courseSwagger = {
               type: "string",
               enum: ["createdAt", "price", "title"],
             },
-            description: "مرتب‌سازی بر اساس",
           },
           {
             name: "order",
             in: "query",
             schema: { type: "string", enum: ["asc", "desc"] },
-            description: "ترتیب",
           },
         ],
         responses: {
           200: {
-            description: "لیست همه دوره‌ها",
+            description: "List of All Courses.",
             content: {
               "application/json": {
                 example: {
@@ -386,7 +396,7 @@ export const courseSwagger = {
         ],
         responses: {
           200: {
-            description: "دوره با موفقیت دریافت شد.",
+            description: "Course is Fetched Successfully.",
             content: {
               "application/json": {
                 example: {
@@ -441,7 +451,6 @@ export const courseSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         requestBody: {
@@ -489,7 +498,7 @@ export const courseSwagger = {
         },
         responses: {
           200: {
-            description: "دوره با موفقیت ویرایش شد.",
+            description: "Course is Edited Successfully.",
             content: {
               "application/json": {
                 example: {
@@ -572,12 +581,11 @@ export const courseSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         responses: {
           200: {
-            description: "دوره با موفقیت حذف شد.",
+            description: "Course is Deleted Successfuly.",
             content: {
               "application/json": {
                 example: {
@@ -609,7 +617,6 @@ export const courseSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         requestBody: {

@@ -20,6 +20,14 @@ const coerceBoolean = z.preprocess(
   z.boolean({ error: "وضعیت انتشار باید boolean باشد" }),
 );
 
+const categoriesSchema = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((val) => {
+    if (!val) return undefined;
+    return Array.isArray(val) ? val : [val];
+  });
+
 export const createCourseSchema = z.object({
   body: z.object({
     title: z
@@ -95,7 +103,7 @@ export const listCoursesPublicSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/, "page باید عدد باشد").optional(),
     limit: z.string().regex(/^\d+$/, "limit باید عدد باشد").optional(),
-    category: z.string().optional(),
+    categories: categoriesSchema,
     level: courseLevelEnum.optional(),
     minPrice: z.string().regex(/^\d+$/, "minPrice باید عدد باشد").optional(),
     maxPrice: z.string().regex(/^\d+$/, "maxPrice باید عدد باشد").optional(),
@@ -109,7 +117,7 @@ export const listCoursesAdminSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/, "page باید عدد باشد").optional(),
     limit: z.string().regex(/^\d+$/, "limit باید عدد باشد").optional(),
-    category: z.string().optional(),
+    categories: categoriesSchema,
     level: courseLevelEnum.optional(),
     published: z.enum(["true", "false"]).optional(),
     search: z.string().max(100).optional(),

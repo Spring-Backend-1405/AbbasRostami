@@ -1,4 +1,4 @@
-import { Prisma } from "../../../generated/prisma/client.js";
+import { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import { removeCloudinaryImage } from "../../utils/cloudinary.js";
@@ -209,8 +209,11 @@ export const courseService = {
       OR: [{ categoryId: null }, { category: { show: true } }],
     };
 
-    if (query.category) {
-      where.category = { slug: query.category, show: true };
+    if (query.categories && query.categories.length > 0) {
+      where.category = {
+        slug: { in: query.categories },
+        show: true,
+      };
     }
 
     if (query.level) {
@@ -295,8 +298,10 @@ export const courseService = {
 
     const where: Prisma.CourseWhereInput = {};
 
-    if (query.category) {
-      where.category = { slug: query.category };
+    if (query.categories && query.categories.length > 0) {
+      where.category = {
+        slug: { in: query.categories },
+      };
     }
 
     if (query.level) {
