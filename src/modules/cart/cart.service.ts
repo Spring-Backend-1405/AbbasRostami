@@ -1,5 +1,9 @@
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import {
+  calculateDiscountAmount,
+  validateDiscount,
+} from "../discount/discount.service.js";
 import { cartInclude, CartWithItems } from "./cart.types.js";
 
 const formatCart = (cart: CartWithItems) => {
@@ -89,7 +93,42 @@ export const cartService = {
 
   async getCart(userId: string) {
     const cart = await this.getOrCreateCart(userId);
-    return formatCart(cart);
+    const formatted = formatCart(cart);
+
+    // ← totalAmount از formatted رو حذف کن
+    const { totalAmount, ...rest } = formatted;
+    const subtotal = totalAmount;
+
+    if (cart.discountCode) {
+      try {
+        const discount = await validateDiscount(cart.discountCode);
+        const amount = calculateDiscountAmount(subtotal, discount);
+
+        return {
+          ...rest,
+          subtotal,
+          discount: {
+            code: discount.code,
+            type: discount.type,
+            value: discount.value,
+            amount,
+          },
+          totalPayment: subtotal - amount,
+        };
+      } catch {
+        await prisma.cart.update({
+          where: { userId },
+          data: { discountCode: null },
+        });
+      }
+    }
+
+    return {
+      ...rest,
+      subtotal,
+      discount: null,
+      totalPayment: subtotal,
+    };
   },
 
   async removeItem(userId: string, courseId: string) {

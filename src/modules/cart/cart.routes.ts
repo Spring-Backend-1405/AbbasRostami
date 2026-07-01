@@ -3,6 +3,11 @@ import { authentication } from "../../middlewares/authentication.js";
 import { validate } from "../../middlewares/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
+  applyDiscountController,
+  removeDiscountController,
+} from "../discount/discount.controller.js";
+import { applyDiscountSchema } from "../discount/discount.validator.js";
+import {
   addToCartController,
   clearCartController,
   getCartController,
@@ -14,6 +19,7 @@ const router = Router();
 
 router.use(authentication);
 
+// ─── Cart
 router.get("/", asyncHandler(getCartController));
 
 router.post(
@@ -29,5 +35,14 @@ router.delete(
 );
 
 router.delete("/", asyncHandler(clearCartController));
+
+// ─── Discount
+router.post(
+  "/apply-discount",
+  validate(applyDiscountSchema),
+  asyncHandler(applyDiscountController),
+);
+
+router.delete("/discount", asyncHandler(removeDiscountController));
 
 export default router;

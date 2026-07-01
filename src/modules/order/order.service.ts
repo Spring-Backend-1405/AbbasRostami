@@ -10,6 +10,7 @@ import {
   verifyPayment as zarinpalVerify,
 } from "../../utils/zarinpal.js";
 import { cartInclude } from "../cart/cart.types.js";
+import { calculateDiscountAmount } from "../discount/discount.service.js";
 import {
   orderAdminInclude,
   orderDetailInclude,
@@ -117,9 +118,7 @@ const createOrderFromCart = async (
     }
 
     const enrolled = await tx.enrollment.findUnique({
-      where: {
-        userId_courseId: { userId, courseId: course.id },
-      },
+      where: { userId_courseId: { userId, courseId: course.id } },
     });
 
     if (enrolled) {
@@ -138,12 +137,41 @@ const createOrderFromCart = async (
     });
   }
 
-  const totalAmount = validItems.reduce((sum, i) => sum + i.price, 0);
+  const subtotal = validItems.reduce((sum, i) => sum + i.price, 0);
+
+  let discountAmount = 0;
+  let discountCode: string | null = null;
+
+  if (cart.discountCode) {
+    const discount = await tx.discount.findUnique({
+      where: { code: cart.discountCode },
+    });
+
+    if (
+      discount &&
+      discount.active &&
+      discount.expiresAt > new Date() &&
+      discount.usedCount < discount.maxUses
+    ) {
+      discountAmount = calculateDiscountAmount(subtotal, discount);
+      discountCode = discount.code;
+
+      await tx.discount.update({
+        where: { id: discount.id },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+  }
+
+  const totalAmount = subtotal - discountAmount;
 
   const order = await tx.order.create({
     data: {
       userId,
+      subtotal,
+      discountAmount,
       totalAmount,
+      discountCode,
       status: "PENDING",
       items: {
         create: validItems.map((item) => ({

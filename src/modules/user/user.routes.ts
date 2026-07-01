@@ -6,6 +6,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   deleteAvatarController,
   getProfileController,
+  getProfileOverviewController,
   updateProfileController,
 } from "./user.controller.js";
 import { updateProfileSchema } from "./user.validator.js";
@@ -13,6 +14,8 @@ import { updateProfileSchema } from "./user.validator.js";
 const router = Router();
 
 router.use(authentication);
+
+router.get("/profile/overview", asyncHandler(getProfileOverviewController));
 
 router.get("/profile", asyncHandler(getProfileController));
 router.put(

@@ -63,4 +63,45 @@ export const userService = {
       select: { id: true, avatar: true },
     });
   },
+
+  async getProfileOverview(userId: string) {
+    const [
+      enrollments,
+      orders,
+      pendingOrders,
+      wallet,
+      comments,
+      pendingComments,
+      favoriteCourses,
+      favoritePosts,
+      cartItems,
+      reactions,
+    ] = await Promise.all([
+      prisma.enrollment.count({ where: { userId } }),
+      prisma.order.count({ where: { userId } }),
+      prisma.order.count({ where: { userId, status: "PENDING" } }),
+      prisma.wallet.findUnique({
+        where: { userId },
+        select: { balance: true },
+      }),
+      prisma.comment.count({ where: { userId } }),
+      prisma.comment.count({ where: { userId, status: "PENDING" } }),
+      prisma.courseFavorite.count({ where: { userId } }),
+      prisma.blogFavorite.count({ where: { userId } }),
+      prisma.cartItem.count({
+        where: { cart: { userId } },
+      }),
+      prisma.reaction.count({ where: { userId } }),
+    ]);
+
+    return {
+      enrollment: { total: enrollments },
+      order: { total: orders, active: pendingOrders },
+      wallet: { balance: wallet?.balance ?? 0 },
+      comment: { total: comments, pending: pendingComments },
+      favorite: { courses: favoriteCourses, posts: favoritePosts },
+      cart: { items: cartItems },
+      reaction: { total: reactions },
+    };
+  },
 };

@@ -1,5 +1,38 @@
 export const userSwagger = {
   paths: {
+    "/api/users/profile/overview": {
+      get: {
+        tags: ["User"],
+        summary: "Get user profile overview",
+        description:
+          "Returns aggregated stats for the authenticated user's dashboard.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Stats for User Profile.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    overview: {
+                      enrollment: { total: 5 },
+                      order: { total: 7, active: 1 },
+                      wallet: { balance: 500000 },
+                      comment: { total: 12, pending: 2 },
+                      favorite: { courses: 3, posts: 2 },
+                      cart: { items: 2 },
+                      reaction: { total: 45 },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+        },
+      },
+    },
     "/api/users/profile": {
       get: {
         tags: ["User"],

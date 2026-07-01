@@ -58,3 +58,16 @@ export const deleteAvatarController: RequestHandler = async (req, res) => {
     },
   });
 };
+
+export const getProfileOverviewController: RequestHandler = async (
+  req,
+  res,
+) => {
+  const userId = req.user!.id;
+  const overview = await userService.getProfileOverview(userId);
+
+  return res.status(200).json({
+    status: "success",
+    data: { overview },
+  });
+};
