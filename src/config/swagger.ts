@@ -3,6 +3,7 @@ import { cartSwagger } from "../modules/cart/cart.swagger.js";
 import { categorySwagger } from "../modules/category/category.swagger.js";
 import { commentSwagger } from "../modules/comment/comment.swagger.js";
 import { courseSwagger } from "../modules/course/course.swagger.js";
+import { discountSwagger } from "../modules/discount/discount.swagger.js";
 import { enrollmentSwagger } from "../modules/enrollment/enrollment.swagger.js";
 import { favoriteSwagger } from "../modules/favorite/favorite.swagger.js";
 import { healthSwagger } from "../modules/health/health.swagger.js";
@@ -11,6 +12,7 @@ import { postSwagger } from "../modules/post/post.swagger.js";
 import { reactionSwagger } from "../modules/reaction/reaction.swagger.js";
 import { searchSwagger } from "../modules/search/search.swagger.js";
 import { userSwagger } from "../modules/user/user.swagger.js";
+import { overviewSwagger } from "../modules/overview/overview.swagger.js";
 import { walletSwagger } from "../modules/wallet/wallet.swagger.js";
 
 export const swaggerSpec = {
@@ -74,5 +76,7 @@ This API supports a dual-authentication mechanism designed to maximize flexibili
     ...searchSwagger.paths,
     ...cartSwagger.paths,
     ...orderSwagger.paths,
+    ...discountSwagger.paths,
+    ...overviewSwagger.paths,
   },
 };
