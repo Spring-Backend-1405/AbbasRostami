@@ -5,19 +5,14 @@ const ZARINPAL_VERIFY_URL = `${ZARINPAL_BASE_URL}/pg/v4/payment/verify.json`;
 const ZARINPAL_GATEWAY_URL = `${ZARINPAL_BASE_URL}/pg/StartPay/`;
 
 const MERCHANT_ID = process.env.ZARINPAL_MERCHANT_ID;
-const CALLBACK_URL = process.env.ZARINPAL_CALLBACK_URL;
 
 if (!MERCHANT_ID) {
   throw new Error("❌ ZARINPAL_MERCHANT_ID is not defined in .env");
 }
-
-if (!CALLBACK_URL) {
-  throw new Error("❌ ZARINPAL_CALLBACK_URL is not defined in .env");
-}
-
 export interface ZarinPalRequestPayload {
   amount: number;
   description: string;
+  callbackUrl: string;
   email?: string;
   mobile?: string;
   orderId?: string;
@@ -108,7 +103,7 @@ export const requestPayment = async (
         amount: payload.amount,
         currency: "IRR",
         description: payload.description,
-        callback_url: CALLBACK_URL,
+        callback_url: payload.callbackUrl,
         metadata: {
           email: payload.email,
           mobile: payload.mobile,
