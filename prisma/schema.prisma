@@ -12,18 +12,410 @@ datasource db {
   provider = "postgresql"
 }
 
+// ENUMS
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
-  posts Post[]
-} 
-model Post { 
-  id        Int     @id @default(autoincrement()) 
-  title     String
-  content   String?
-  published Boolean @default(false) 
-  author    User    @relation(fields: [authorId], references: [id]) 
-  authorId  Int
-} 
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum TransactionType {
+  CHARGE
+  PURCHASE
+  REFUND
+}
+
+enum PaymentMethod {
+  WALLET
+  ZARINPAL
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+enum ReactionTarget {
+  COURSE
+  COMMENT
+  POST
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+
+// USER
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  name                String?
+  phone               String?
+  avatar              String?
+  password            String
+  role                Role      @default(USER)
+  isVerified          Boolean   @default(false)
+  verificationCode    String?
+  verificationExpires DateTime?
+  refreshToken        String?
+  resetPasswordCode     String?
+  resetPasswordExpires  DateTime?
+
+  pendingNewEmail       String?
+  changeEmailCode       String?
+  changeEmailExpires    DateTime?
+
+  wallet          Wallet?
+  cart            Cart?
+  enrollments     Enrollment[]
+  comments        Comment[]
+  favoriteCourses CourseFavorite[]
+  favoriteBlogs   BlogFavorite[]
+  orders          Order[]
+  transactions    Transaction[]
+  reactions       Reaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// WALLET
+model Wallet {
+  id        String   @id @default(uuid())
+  balance   Int      @default(0)
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  amount      Int
+  status      TransactionStatus @default(PENDING)
+  type        TransactionType
+  authority   String?           @unique
+  refId       String?
+  description String?
+
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId    String?
+  course      Course?           @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  orderId     String?
+  order       Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([authority])
+  @@index([userId, status])
+  @@index([userId, type])
+  @@index([orderId])
+}
+
+
+// CATEGORY
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  show        Boolean  @default(true)
+
+  courses Course[]
+  posts   Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([show])
+}
+
+
+// COURSE
+model Course {
+  id          String      @id @default(uuid())
+  title       String
+  slug        String      @unique
+  description String?
+  price       Int         @default(0)
+  imageUrl    String?
+  level       CourseLevel @default(BEGINNER)
+  published   Boolean     @default(false)
+
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  enrollments  Enrollment[]
+  comments     Comment[]
+  favorites    CourseFavorite[]
+  reactions    Reaction[]
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([price])
+  @@index([published])
+}
+
+model Enrollment {
+  id        String @id @default(uuid())
+  pricePaid Int    @default(0)
+  userId    String
+  courseId  String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+
+// CART
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items     CartItem[]
+
+  discountCode String?
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  courseId  String
+
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([cartId, courseId])
+  @@index([cartId])
+  @@index([courseId])
+}
+
+
+// ORDER
+model Order {
+  id             String         @id @default(uuid())
+  
+  subtotal       Int
+  discountAmount Int            @default(0)
+  totalAmount    Int
+  discountCode   String?
+
+  status         OrderStatus    @default(PENDING)
+  paymentMethod  PaymentMethod?
+
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items          OrderItem[]
+  transactions   Transaction[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  courseId        String?
+
+  courseTitle     String
+  courseSlug      String
+  courseImageUrl  String?
+  price           Int
+
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  course          Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime @default(now())
+
+  @@index([orderId])
+  @@index([courseId])
+}
+
+// ─────────────────────────────────────────
+// COMMENTS
+// ─────────────────────────────────────────
+
+model Comment {
+  id       String @id @default(uuid())
+  content  String
+
+  status   CommentStatus @default(PENDING)
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  postId   String?
+  post     Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  reactions Reaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId, status, createdAt])
+  @@index([postId, status, createdAt])
+  @@index([userId])
+  @@index([status])
+}
+
+
+// REACTIONS
+model Reaction {
+  id         String         @id @default(uuid())
+  type       ReactionType
+  targetType ReactionTarget
+
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId   String?
+  course     Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  commentId  String?
+  comment    Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  postId     String?
+  post       Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@unique([userId, commentId])
+  @@unique([userId, postId])
+  @@index([courseId])
+  @@index([commentId])
+  @@index([postId])
+}
+
+
+// POST
+model Post {
+  id         String   @id @default(uuid())
+  title      String
+  slug       String   @unique
+  content    String
+  imageUrl   String?
+  published  Boolean  @default(false)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  comments   Comment[]
+  favorites  BlogFavorite[]
+  reactions  Reaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published])
+  @@index([categoryId])
+}
+
+
+// FAVORITES
+model CourseFavorite {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model BlogFavorite {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+
+// DISCOUNT
+
+enum DiscountType {
+  PERCENTAGE
+  AMOUNT
+}
+
+model Discount {
+  id            String        @id @default(uuid())
+  code          String        @unique
+
+  type          DiscountType
+  value         Int
+
+  maxUses       Int
+  usedCount     Int           @default(0)
+
+  expiresAt     DateTime
+  active        Boolean       @default(true)
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([code])
+  @@index([active])
+}
