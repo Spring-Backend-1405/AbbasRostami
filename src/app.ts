@@ -33,7 +33,11 @@ const morganFormat = process.env.NODE_ENV === "production" ? "combined" : "dev";
 app.use(morgan(morganFormat));
 
 // ─── Security
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  }),
+);
 
 // ─── CORS
 const allowedOrigins = [
