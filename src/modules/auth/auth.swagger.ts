@@ -28,7 +28,7 @@ export const authSwagger = {
         },
         responses: {
           201: {
-            description: "ثبت‌نام اولیه موفقیت‌آمیز بود و ایمیل ارسال شد.",
+            description: "Registered successfully. OTP code sent to email.",
             content: {
               "application/json": {
                 example: {
@@ -84,7 +84,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "ایمیل تایید شد و کوکی‌های سشن ست شدند.",
+            description: "Email verified successfully. User logged in.",
             content: {
               "application/json": {
                 example: {
@@ -145,7 +145,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "ورود موفقیت‌آمیز.",
+            description: "User logged in successfully.",
             content: {
               "application/json": {
                 example: {
@@ -164,7 +164,7 @@ export const authSwagger = {
             },
           },
           401: {
-            description: "اشتباه بودن اطلاعات ورود",
+            description: "Email or password is incorrect.",
             content: {
               "application/json": {
                 example: {
@@ -175,7 +175,7 @@ export const authSwagger = {
             },
           },
           403: {
-            description: "حساب کاربری فعال نشده است.",
+            description: "Account is not verified.",
             content: {
               "application/json": {
                 example: {
@@ -199,13 +199,13 @@ export const authSwagger = {
           "Extracts `refreshToken` automatically from cookies and updates access tokens.",
         responses: {
           200: {
-            description: "توکن با موفقیت تمدید شد.",
+            description: "Access token refreshed successfully.",
             content: {
               "application/json": {
                 example: {
                   status: "success",
                   data: {
-                    message: "توکن شما با موفقیت تمدید شد",
+                    message: "Your token has been refreshed successfully",
                     accessToken: "eyJhbGciOi...",
                   },
                 },
@@ -223,7 +223,7 @@ export const authSwagger = {
         description: "Clears server tokens and cookie storage.",
         responses: {
           200: {
-            description: "خروج با موفقیت انجام شد.",
+            description: "User logged out successfully.",
             content: {
               "application/json": {
                 example: {
@@ -262,7 +262,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "درخواست ثبت شد.",
+            description: "Request submitted successfully.",
             content: {
               "application/json": {
                 example: {
@@ -339,7 +339,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "رمز با موفقیت تغییر یافت.",
+            description: "Password changed successfully.",
             content: {
               "application/json": {
                 example: {
@@ -414,7 +414,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "درخواست ثبت شد.",
+            description: "Request submitted successfully.",
             content: {
               "application/json": {
                 example: {
@@ -444,7 +444,6 @@ export const authSwagger = {
         },
       },
     },
-
     "/api/auth/resend-reset-code": {
       post: {
         tags: ["Auth"],
@@ -471,7 +470,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "درخواست ثبت شد.",
+            description: "Request submitted successfully.",
             content: {
               "application/json": {
                 example: {
@@ -540,7 +539,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "رمز با موفقیت تغییر یافت.",
+            description: "Password changed successfully.",
             content: {
               "application/json": {
                 example: {
@@ -638,7 +637,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "کد به ایمیل جدید ارسال شد.",
+            description: "Code sent to the new email.",
             content: {
               "application/json": {
                 example: {
@@ -688,7 +687,6 @@ export const authSwagger = {
         },
       },
     },
-
     "/api/auth/verify-change-email": {
       post: {
         tags: ["Auth"],
@@ -716,7 +714,7 @@ export const authSwagger = {
         },
         responses: {
           200: {
-            description: "ایمیل تغییر کرد.",
+            description: "Email is Changed.",
             content: {
               "application/json": {
                 example: {

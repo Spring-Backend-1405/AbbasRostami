@@ -50,7 +50,7 @@ const reactionParam = {
 
 const reactionResponses = {
   200: {
-    description: "عملیات موفقیت‌آمیز.",
+    description: "Operation completed successfully.",
     content: {
       "application/json": {
         examples: {

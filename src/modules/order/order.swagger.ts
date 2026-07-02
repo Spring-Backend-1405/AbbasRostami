@@ -9,7 +9,7 @@ export const orderSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "پرداخت با موفقیت انجام شد.",
+            description: "Payment completed successfully.",
             content: {
               "application/json": {
                 example: {
@@ -51,7 +51,8 @@ export const orderSwagger = {
             },
           },
           400: {
-            description: "سبد خالی، موجودی ناکافی، یا دوره نامعتبر.",
+            description:
+              "Cart is empty, insufficient balance, or course is unavailable.",
             content: {
               "application/json": {
                 examples: {
@@ -95,7 +96,7 @@ export const orderSwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           404: {
-            description: "کیف پول یافت نشد.",
+            description: "Wallet not found. User must have a wallet to pay.",
             content: {
               "application/json": {
                 example: {
@@ -205,7 +206,7 @@ export const orderSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست سفارش‌ها.",
+            description: "List of Orders.",
             content: {
               "application/json": {
                 example: {
@@ -275,7 +276,7 @@ export const orderSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست سفارش‌ها.",
+            description: "List of Orders for admin.",
             content: {
               "application/json": {
                 example: {
@@ -331,7 +332,7 @@ export const orderSwagger = {
         ],
         responses: {
           200: {
-            description: "جزئیات سفارش.",
+            description: "Details of Order.",
             content: {
               "application/json": {
                 example: {
@@ -390,7 +391,7 @@ export const orderSwagger = {
         ],
         responses: {
           200: {
-            description: "جزئیات سفارش.",
+            description: "Details of Order.",
             content: {
               "application/json": {
                 example: {
@@ -444,7 +445,7 @@ export const orderSwagger = {
         ],
         responses: {
           200: {
-            description: "سفارش لغو شد.",
+            description: "Order cancelled successfully.",
             content: {
               "application/json": {
                 example: {
@@ -476,7 +477,7 @@ export const orderSwagger = {
             },
           },
           400: {
-            description: "سفارش قابل لغو نیست.",
+            description: "Order cannot be cancelled.",
             content: {
               "application/json": {
                 example: {

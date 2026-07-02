@@ -28,7 +28,7 @@ export const cartSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "سبد خرید.",
+            description: "User cart retrieved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -48,7 +48,7 @@ export const cartSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "سبد خرید خالی شد.",
+            description: "User cart cleared successfully.",
             content: {
               "application/json": {
                 example: {
@@ -88,7 +88,7 @@ export const cartSwagger = {
         },
         responses: {
           201: {
-            description: "دوره به سبد خرید اضافه شد.",
+            description: "Course added to cart successfully.",
             content: {
               "application/json": {
                 example: {
@@ -132,7 +132,7 @@ export const cartSwagger = {
         ],
         responses: {
           200: {
-            description: "از سبد خرید حذف شد.",
+            description: "Course removed from cart successfully.",
             content: {
               "application/json": {
                 example: {

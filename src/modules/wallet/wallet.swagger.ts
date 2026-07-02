@@ -9,7 +9,7 @@ export const walletSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "موجودی کیف پول با موفقیت دریافت شد.",
+            description: "Wallet balance retrieved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -86,7 +86,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
         },
         responses: {
           200: {
-            description: "درخواست پرداخت ایجاد شد.",
+            description: "Payment request created successfully.",
             content: {
               "application/json": {
                 example: {
@@ -139,7 +139,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           500: {
-            description: "خطا در ارتباط با ZarinPal",
+            description: "Error in communication with ZarinPal",
             content: {
               "application/json": {
                 example: {
@@ -195,7 +195,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
         ],
         responses: {
           200: {
-            description: "تاریخچه تراکنش‌ها.",
+            description: "Transaction history retrieved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -274,7 +274,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
         ],
         responses: {
           200: {
-            description: "لیست کیف‌پول‌ها.",
+            description: "List of wallets retrieved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -365,7 +365,7 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
         ],
         responses: {
           200: {
-            description: "لیست همه تراکنش‌ها با pagination.",
+            description: "List of all transactions with pagination.",
             content: {
               "application/json": {
                 example: {

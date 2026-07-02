@@ -305,7 +305,7 @@ export const discountSwagger = {
         },
         responses: {
           200: {
-            description: "کد اعمال شد.",
+            description: "Code Discount Applied.",
             content: {
               "application/json": {
                 example: {
@@ -362,7 +362,7 @@ export const discountSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "کد حذف شد.",
+            description: "Code removed.",
             content: {
               "application/json": {
                 example: {
@@ -373,7 +373,7 @@ export const discountSwagger = {
             },
           },
           400: {
-            description: "کدی در سبد نیست.",
+            description: "Code not in cart.",
             content: {
               "application/json": {
                 example: {

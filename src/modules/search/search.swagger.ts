@@ -41,7 +41,7 @@ export const searchSwagger = {
         ],
         responses: {
           200: {
-            description: "نتایج جستجو.",
+            description: "Search results.",
             content: {
               "application/json": {
                 examples: {

@@ -8,11 +8,11 @@ import { enrollmentSwagger } from "../modules/enrollment/enrollment.swagger.js";
 import { favoriteSwagger } from "../modules/favorite/favorite.swagger.js";
 import { healthSwagger } from "../modules/health/health.swagger.js";
 import { orderSwagger } from "../modules/order/order.swagger.js";
+import { overviewSwagger } from "../modules/overview/overview.swagger.js";
 import { postSwagger } from "../modules/post/post.swagger.js";
 import { reactionSwagger } from "../modules/reaction/reaction.swagger.js";
 import { searchSwagger } from "../modules/search/search.swagger.js";
 import { userSwagger } from "../modules/user/user.swagger.js";
-import { overviewSwagger } from "../modules/overview/overview.swagger.js";
 import { walletSwagger } from "../modules/wallet/wallet.swagger.js";
 
 export const swaggerSpec = {
@@ -34,7 +34,7 @@ This API supports a dual-authentication mechanism designed to maximize flexibili
   },
   servers: [
     {
-      url: "http://localhost:3000",
+      url: process.env.BACKEND_URL!,
       description: "Local Development Server",
     },
     {

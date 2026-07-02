@@ -41,7 +41,7 @@ export const userSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "مشخصات پروفایل کاربر با موفقیت دریافت شد.",
+            description: "User information retrieved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -101,7 +101,7 @@ export const userSwagger = {
         },
         responses: {
           200: {
-            description: "پروفایل با موفقیت به‌روزرسانی شد.",
+            description: "Profile updated successfully.",
             content: {
               "application/json": {
                 example: {
@@ -147,7 +147,7 @@ export const userSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آواتار با موفقیت حذف شد.",
+            description: "Avatar deleted successfully.",
             content: {
               "application/json": {
                 example: {

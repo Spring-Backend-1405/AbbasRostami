@@ -29,7 +29,7 @@ export const courseSwagger = {
             style: "form",
             explode: true,
             description:
-              "فیلتر بر اساس چند دسته با slug. مثال: ?categories=frontend&categories=backend",
+              "Filter by categories. Example: ?categories=frontend&categories=backend",
             example: ["frontend", "backend"],
           },
           {
@@ -39,25 +39,25 @@ export const courseSwagger = {
               type: "string",
               enum: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
             },
-            description: "فیلتر بر اساس سطح دوره",
+            description: "Filter by Level",
           },
           {
             name: "minPrice",
             in: "query",
             schema: { type: "string" },
-            description: "حداقل قیمت (به ریال)",
+            description: "Minimum price (in Rials)",
           },
           {
             name: "maxPrice",
             in: "query",
             schema: { type: "string" },
-            description: "حداکثر قیمت (به ریال)",
+            description: "Maximum price (in Rials )",
           },
           {
             name: "search",
             in: "query",
             schema: { type: "string" },
-            description: "جستجو در عنوان و توضیحات",
+            description: "Search in title and description",
           },
           {
             name: "sortBy",
@@ -67,7 +67,7 @@ export const courseSwagger = {
               enum: ["createdAt", "price", "title"],
               default: "createdAt",
             },
-            description: "مرتب‌سازی بر اساس",
+            description: "Sort by",
           },
           {
             name: "order",
@@ -77,12 +77,12 @@ export const courseSwagger = {
               enum: ["asc", "desc"],
               default: "desc",
             },
-            description: "ترتیب",
+            description: "Order of sorting",
           },
         ],
         responses: {
           200: {
-            description: "لیست دوره‌ها",
+            description: "List of courses with pagination.",
             content: {
               "application/json": {
                 example: {

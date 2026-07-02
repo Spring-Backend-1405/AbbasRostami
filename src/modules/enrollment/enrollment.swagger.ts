@@ -18,7 +18,7 @@ export const enrollmentSwagger = {
         ],
         responses: {
           201: {
-            description: "ثبت‌نام موفقیت‌آمیز در دوره رایگان.",
+            description: "Enrollment created successfully.",
             content: {
               "application/json": {
                 example: {

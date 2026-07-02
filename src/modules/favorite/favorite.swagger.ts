@@ -18,7 +18,7 @@ export const favoriteSwagger = {
         ],
         responses: {
           200: {
-            description: "عملیات موفقیت‌آمیز.",
+            description: "Fetching successfully.",
             content: {
               "application/json": {
                 examples: {
@@ -72,7 +72,7 @@ export const favoriteSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست دوره‌های ذخیره شده.",
+            description: "List of favorite courses.",
             content: {
               "application/json": {
                 example: {
@@ -134,7 +134,7 @@ export const favoriteSwagger = {
         ],
         responses: {
           200: {
-            description: "عملیات موفقیت‌آمیز.",
+            description: "Fetching Successfully.",
             content: {
               "application/json": {
                 examples: {
@@ -189,7 +189,7 @@ export const favoriteSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست پست‌های ذخیره شده.",
+            description: "List of favorite posts.",
             content: {
               "application/json": {
                 example: {

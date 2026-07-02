@@ -68,7 +68,7 @@ export const commentSwagger = {
         },
         responses: {
           201: {
-            description: "کامنت با موفقیت ثبت شد.",
+            description: "Comment submitted successfully.",
             content: {
               "application/json": {
                 example: {
@@ -101,7 +101,7 @@ export const commentSwagger = {
             },
           },
           400: {
-            description: "خطای اعتبارسنجی.",
+            description: "Validation error.",
             content: {
               "application/json": {
                 examples: {
@@ -161,7 +161,7 @@ export const commentSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست کامنت‌های دوره.",
+            description: "List of course comments.",
             content: {
               "application/json": {
                 example: {
@@ -283,7 +283,7 @@ export const commentSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست کامنت‌های پست به صورت درختی.",
+            description: "List of post comments as a tree.",
             content: {
               "application/json": {
                 example: {
@@ -388,7 +388,7 @@ export const commentSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست کامنت‌های کاربر.",
+            description: "List of user comments.",
             content: {
               "application/json": {
                 example: {
@@ -472,7 +472,7 @@ export const commentSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست کامنت‌ها.",
+            description: "List of comments.",
             content: {
               "application/json": {
                 example: {
@@ -540,7 +540,7 @@ export const commentSwagger = {
         ],
         responses: {
           200: {
-            description: "کامنت تأیید شد.",
+            description: "Comment approved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -583,7 +583,7 @@ export const commentSwagger = {
           403: { description: "Access denied: Admin only." },
           404: { description: "Comment not found." },
           409: {
-            description: "کامنت قبلاً تأیید شده.",
+            description: "Comment is already approved.",
             content: {
               "application/json": {
                 example: {
@@ -615,7 +615,7 @@ export const commentSwagger = {
         ],
         responses: {
           200: {
-            description: "کامنت رد شد.",
+            description: "Comment rejected successfully.",
             content: {
               "application/json": {
                 example: {
@@ -658,7 +658,7 @@ export const commentSwagger = {
           403: { description: "Access denied: Admin only." },
           404: { description: "Comment not found." },
           409: {
-            description: "کامنت قبلاً رد شده.",
+            description: "Comment is already rejected.",
             content: {
               "application/json": {
                 example: {
@@ -691,7 +691,7 @@ export const commentSwagger = {
         ],
         responses: {
           200: {
-            description: "کامنت حذف شد.",
+            description: "Comment deleted successfully.",
             content: {
               "application/json": {
                 example: {
@@ -705,7 +705,8 @@ export const commentSwagger = {
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: {
-            description: "شما اجازه حذف این کامنت را ندارید.",
+            description:
+              " permission denied: Only the comment owner or admin can delete.",
             content: {
               "application/json": {
                 example: {

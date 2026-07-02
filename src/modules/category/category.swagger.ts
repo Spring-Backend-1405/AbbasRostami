@@ -8,7 +8,7 @@ export const categorySwagger = {
           "Returns active categories (show=true) with count of published courses and posts. No authentication required.",
         responses: {
           200: {
-            description: "لیست دسته بندی های فعال با موفقیت دریافت شد.",
+            description: "List of active categories retrieved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -71,7 +71,7 @@ export const categorySwagger = {
         },
         responses: {
           201: {
-            description: "دسته بندی با موفقیت ایجاد شد.",
+            description: "Category created successfully.",
             content: {
               "application/json": {
                 example: {
@@ -144,7 +144,7 @@ export const categorySwagger = {
         ],
         responses: {
           200: {
-            description: "لیست دسته بندی ها با pagination.",
+            description: "Categories retrieved with pagination.",
             content: {
               "application/json": {
                 example: {
@@ -191,7 +191,7 @@ export const categorySwagger = {
         ],
         responses: {
           200: {
-            description: "دسته بندی با موفقیت دریافت شد.",
+            description: "Category retrieved successfully.",
             content: {
               "application/json": {
                 example: {
@@ -258,7 +258,7 @@ export const categorySwagger = {
         },
         responses: {
           200: {
-            description: "دسته بندی با موفقیت ویرایش شد.",
+            description: "Category updated successfully.",
             content: {
               "application/json": {
                 example: {
@@ -312,7 +312,7 @@ export const categorySwagger = {
         ],
         responses: {
           200: {
-            description: "دسته بندی با موفقیت حذف شد.",
+            description: "Category deleted successfully.",
             content: {
               "application/json": {
                 example: {
@@ -367,7 +367,7 @@ export const categorySwagger = {
         },
         responses: {
           200: {
-            description: "وضعیت نمایش با موفقیت تغییر کرد.",
+            description: "Status Category updated successfully.",
             content: {
               "application/json": {
                 examples: {
@@ -412,7 +412,7 @@ export const categorySwagger = {
             },
           },
           400: {
-            description: "وضعیت تکراری یا ولیدیشن.",
+            description: "Status is duplicate or validation failed.",
             content: {
               "application/json": {
                 example: {

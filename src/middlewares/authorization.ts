@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { Role } from "../generated/prisma/enums.js";
+import { Role } from "../../generated/prisma/enums.js";
 import { AppError } from "../utils/AppError.js";
 
 export const authorize = (...allowedRoles: Role[]) => {

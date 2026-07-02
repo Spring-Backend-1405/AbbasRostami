@@ -48,7 +48,7 @@ export const postSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست پست‌ها.",
+            description: "List of Public Posts.",
             content: {
               "application/json": {
                 example: {
@@ -110,7 +110,7 @@ export const postSwagger = {
         },
         responses: {
           201: {
-            description: "پست با موفقیت ایجاد شد.",
+            description: "Post created successfully.",
             content: {
               "application/json": {
                 example: {
@@ -180,7 +180,7 @@ export const postSwagger = {
         ],
         responses: {
           200: {
-            description: "لیست همه پست‌ها.",
+            description: "List of all posts.",
             content: {
               "application/json": {
                 example: {
@@ -213,7 +213,7 @@ export const postSwagger = {
         ],
         responses: {
           200: {
-            description: "جزئیات پست.",
+            description: "Details of the post.",
             content: {
               "application/json": {
                 example: {
@@ -280,7 +280,7 @@ export const postSwagger = {
           },
         },
         responses: {
-          200: { description: "پست ویرایش شد." },
+          200: { description: "Post updated successfully." },
           400: {
             description: `Invalid request - Validation rules:\n
 - id (path):
@@ -325,7 +325,7 @@ At least one field is required.`,
           },
         ],
         responses: {
-          200: { description: "پست حذف شد." },
+          200: { description: "Post deleted successfully." },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Access denied: Admin only." },
           404: { description: "Post not found" },
@@ -361,8 +361,8 @@ At least one field is required.`,
           },
         },
         responses: {
-          200: { description: "وضعیت انتشار تغییر کرد." },
-          400: { description: "پست از قبل در این وضعیت است." },
+          200: { description: "Publish status changed." },
+          400: { description: "Post is already in this status." },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Access denied: Admin only." },
           404: { description: "Post not found" },
