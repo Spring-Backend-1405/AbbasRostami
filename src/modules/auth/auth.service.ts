@@ -1,6 +1,6 @@
-import nodemailer from "nodemailer";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import { sendEmail } from "../../utils/email.js";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -26,49 +26,8 @@ import {
   VerifyEmailInput,
 } from "./auth.validator.js";
 
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
-
-const sendVerificationEmail = async (
-  email: string,
-  name: string | null,
-  code: string,
-) => {
-  const emailHtml = getVerificationEmailTemplate(name || "کاربر گرامی", code);
-
-  await transporter.sendMail({
-    from: `"پشتیبانی پروژه" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "🔑 کد تایید حساب کاربری",
-    text: `سلام ${name || "کاربر گرامی"}\nکد تایید شما: ${code}\nاین کد تا ۱۵ دقیقه معتبر است.`,
-    html: emailHtml,
-  });
-};
-
-const sendResetPasswordEmail = async (
-  email: string,
-  name: string | null,
-  code: string,
-) => {
-  const emailHtml = getResetPasswordEmailTemplate(name || "کاربر گرامی", code);
-
-  await transporter.sendMail({
-    from: `"پشتیبانی پروژه" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "🔐 بازیابی رمز عبور",
-    text: `سلام ${name || "کاربر گرامی"}\nکد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۵ دقیقه معتبر است.`,
-    html: emailHtml,
-  });
-};
 
 export const authService = {
   async register(data: RegisterInput) {
@@ -83,9 +42,7 @@ export const authService = {
     }
 
     const hashedPassword = await hashPassword(data.password);
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000,
-    ).toString();
+    const verificationCode = generateCode();
     const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
 
     const user = await prisma.user.create({
@@ -103,9 +60,17 @@ export const authService = {
       },
     });
 
-    sendVerificationEmail(user.email, user.name, verificationCode)
-      .then(() => console.log(`✉️ Email sent to ${user.email}`))
-      .catch((err) => console.error("❌ Error sending email:", err));
+    const emailHtml = getVerificationEmailTemplate(
+      user.name || "کاربر گرامی",
+      verificationCode,
+    );
+
+    sendEmail({
+      to: user.email,
+      subject: "🔑 کد تایید حساب کاربری",
+      html: emailHtml,
+      text: `کد تایید شما: ${verificationCode}`,
+    });
 
     return { email: user.email, message: "کد تایید به ایمیل شما ارسال شد" };
   },
@@ -241,15 +206,11 @@ export const authService = {
       message: "اگر این ایمیل در سیستم وجود داشته باشد، کد بازیابی ارسال شد",
     };
 
-    if (!user) {
+    if (!user || !user.isVerified) {
       return genericMessage;
     }
 
-    if (!user.isVerified) {
-      return genericMessage;
-    }
-
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetCode = generateCode();
     const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
 
     await prisma.user.update({
@@ -260,9 +221,17 @@ export const authService = {
       },
     });
 
-    sendResetPasswordEmail(user.email, user.name, resetCode)
-      .then(() => console.log(`📧 Reset email sent to ${user.email}`))
-      .catch((err) => console.error("❌ Error sending reset email:", err));
+    const emailHtml = getResetPasswordEmailTemplate(
+      user.name || "کاربر گرامی",
+      resetCode,
+    );
+
+    sendEmail({
+      to: user.email,
+      subject: "🔐 بازیابی رمز عبور",
+      html: emailHtml,
+      text: `کد بازیابی: ${resetCode}`,
+    });
 
     return genericMessage;
   },
@@ -324,11 +293,7 @@ export const authService = {
       message: "اگر این ایمیل در سیستم وجود داشته باشد، کد ارسال شد",
     };
 
-    if (!user) {
-      return genericMessage;
-    }
-
-    if (user.isVerified) {
+    if (!user || user.isVerified) {
       return genericMessage;
     }
 
@@ -337,17 +302,20 @@ export const authService = {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        verificationCode,
-        verificationExpires,
-      },
+      data: { verificationCode, verificationExpires },
     });
 
-    sendVerificationEmail(user.email, user.name, verificationCode)
-      .then(() => console.log(`📧 Verification resent to ${user.email}`))
-      .catch((err) =>
-        console.error("❌ Error sending verification email:", err),
-      );
+    const emailHtml = getVerificationEmailTemplate(
+      user.name || "کاربر گرامی",
+      verificationCode,
+    );
+
+    sendEmail({
+      to: user.email,
+      subject: "🔑 کد تایید حساب کاربری",
+      html: emailHtml,
+      text: `کد تایید شما: ${verificationCode}`,
+    });
 
     return genericMessage;
   },
@@ -361,11 +329,7 @@ export const authService = {
       message: "اگر این ایمیل در سیستم وجود داشته باشد، کد ارسال شد",
     };
 
-    if (!user) {
-      return genericMessage;
-    }
-
-    if (!user.isVerified) {
+    if (!user || !user.isVerified) {
       return genericMessage;
     }
 
@@ -384,24 +348,29 @@ export const authService = {
       },
     });
 
-    sendResetPasswordEmail(user.email, user.name, resetCode)
-      .then(() => console.log(`📧 Reset code resent to ${user.email}`))
-      .catch((err) => console.error("❌ Error sending reset email:", err));
+    const emailHtml = getResetPasswordEmailTemplate(
+      user.name || "کاربر گرامی",
+      resetCode,
+    );
+
+    sendEmail({
+      to: user.email,
+      subject: "🔐 بازیابی رمز عبور",
+      html: emailHtml,
+      text: `کد بازیابی: ${resetCode}`,
+    });
 
     return genericMessage;
   },
 
   async changePassword(userId: string, data: ChangePasswordInput) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new AppError("کاربر یافت نشد", 404);
     }
 
     const isMatch = await comparePassword(data.currentPassword, user.password);
-
     if (!isMatch) {
       throw new AppError("رمز عبور فعلی اشتباه است", 400, {
         currentPassword: "رمز عبور فعلی صحیح نیست",
@@ -424,9 +393,7 @@ export const authService = {
   },
 
   async requestChangeEmail(userId: string, data: RequestChangeEmailInput) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new AppError("کاربر یافت نشد", 404);
@@ -455,7 +422,7 @@ export const authService = {
       });
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = generateCode();
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
     await prisma.user.update({
@@ -473,20 +440,12 @@ export const authService = {
       code,
     );
 
-    transporter
-      .sendMail({
-        from: `"پشتیبانی پروژه" <${process.env.EMAIL_USER}>`,
-        to: data.newEmail,
-        subject: "📧 تایید تغییر ایمیل",
-        text: `سلام\nکد تایید تغییر ایمیل: ${code}\nاین کد تا ۱۵ دقیقه معتبر است.`,
-        html: emailHtml,
-      })
-      .then((info) =>
-        console.log(
-          `📧 Change email sent to ${data.newEmail}. ID: ${info.messageId}`,
-        ),
-      )
-      .catch((err) => console.error("❌ Error sending change email:", err));
+    sendEmail({
+      to: data.newEmail,
+      subject: "📧 تایید تغییر ایمیل",
+      html: emailHtml,
+      text: `کد تایید: ${code}`,
+    });
 
     return {
       message: "کد تایید به ایمیل جدید شما ارسال شد",
@@ -495,9 +454,7 @@ export const authService = {
   },
 
   async verifyChangeEmail(userId: string, data: VerifyChangeEmailInput) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new AppError("کاربر یافت نشد", 404);
