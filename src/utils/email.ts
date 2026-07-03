@@ -7,20 +7,23 @@ interface EmailParams {
   text?: string;
 }
 
-// ─── Production: Resend API ─────────────────────
-const sendWithResend = async (params: EmailParams) => {
-  const res = await fetch("https://api.resend.com/emails", {
+// ─── Brevo HTTP API (Production) ─────────────────
+const sendWithBrevo = async (params: EmailParams) => {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "api-key": process.env.BREVO_API_KEY!,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM || "Course Shop <onboarding@resend.dev>",
-      to: params.to,
+      sender: {
+        name: "Course Shop",
+        email: process.env.BREVO_SENDER_EMAIL,
+      },
+      to: [{ email: params.to }],
       subject: params.subject,
-      html: params.html,
-      text: params.text,
+      htmlContent: params.html,
+      textContent: params.text,
     }),
   });
 
@@ -30,7 +33,7 @@ const sendWithResend = async (params: EmailParams) => {
   }
 };
 
-// ─── Local: Gmail ───────────────────────────────
+// ─── Gmail (Local) ───────────────────────────────
 const sendWithGmail = async (params: EmailParams) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -52,8 +55,8 @@ const sendWithGmail = async (params: EmailParams) => {
 // ─── Auto-select ────────────────────────────────
 export const sendEmail = async (params: EmailParams) => {
   try {
-    if (process.env.RESEND_API_KEY) {
-      await sendWithResend(params);
+    if (process.env.BREVO_API_KEY) {
+      await sendWithBrevo(params);
     } else {
       await sendWithGmail(params);
     }
