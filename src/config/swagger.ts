@@ -34,11 +34,11 @@ This API supports a dual-authentication mechanism designed to maximize flexibili
   },
   servers: [
     {
-      url: process.env.BACKEND_URL!,
+      url: "http://localhost:3000",
       description: "Local Development Server",
     },
     {
-      url: "http://localhost:3000",
+      url: process.env.BACKEND_URL!,
       description: "Prodection Server",
     },
   ],
