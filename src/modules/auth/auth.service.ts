@@ -70,7 +70,7 @@ export const authService = {
       subject: "🔑 کد تایید حساب کاربری",
       html: emailHtml,
       text: `کد تایید شما: ${verificationCode}`,
-    });
+    }).catch((err) => console.error("❌ Error sending email:", err));
 
     return { email: user.email, message: "کد تایید به ایمیل شما ارسال شد" };
   },
@@ -231,7 +231,7 @@ export const authService = {
       subject: "🔐 بازیابی رمز عبور",
       html: emailHtml,
       text: `کد بازیابی: ${resetCode}`,
-    });
+    }).catch((err) => console.error("❌ Error sending reset email:", err));
 
     return genericMessage;
   },
@@ -315,7 +315,7 @@ export const authService = {
       subject: "🔑 کد تایید حساب کاربری",
       html: emailHtml,
       text: `کد تایید شما: ${verificationCode}`,
-    });
+    }).catch((err) => console.error("❌ Error sending email:", err));
 
     return genericMessage;
   },
@@ -358,7 +358,7 @@ export const authService = {
       subject: "🔐 بازیابی رمز عبور",
       html: emailHtml,
       text: `کد بازیابی: ${resetCode}`,
-    });
+    }).catch((err) => console.error("❌ Error sending reset email:", err));
 
     return genericMessage;
   },
@@ -445,7 +445,7 @@ export const authService = {
       subject: "📧 تایید تغییر ایمیل",
       html: emailHtml,
       text: `کد تایید: ${code}`,
-    });
+    }).catch((err) => console.error("❌ Error sending change email:", err));
 
     return {
       message: "کد تایید به ایمیل جدید شما ارسال شد",

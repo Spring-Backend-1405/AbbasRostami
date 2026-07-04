@@ -1,3 +1,4 @@
+import { google } from "googleapis";
 import nodemailer from "nodemailer";
 
 interface EmailParams {
@@ -7,34 +8,58 @@ interface EmailParams {
   text?: string;
 }
 
-// ─── Brevo HTTP API (Production) ─────────────────
-const sendWithBrevo = async (params: EmailParams) => {
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": process.env.BREVO_API_KEY!,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      sender: {
-        name: "Course Shop",
-        email: process.env.BREVO_SENDER_EMAIL,
-      },
-      to: [{ email: params.to }],
-      subject: params.subject,
-      htmlContent: params.html,
-      textContent: params.text,
-    }),
+// ─── Gmail API (Production - Render) ────────────
+const sendWithGmailApi = async (params: EmailParams) => {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground",
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
   });
 
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(JSON.stringify(error));
-  }
+  const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+  const subject = `=?UTF-8?B?${Buffer.from(params.subject).toString("base64")}?=`;
+  const fromName = `=?UTF-8?B?${Buffer.from("Course Shop").toString("base64")}?=`;
+  const boundary = "boundary_course_shop";
+
+  const message = [
+    `From: ${fromName} <${process.env.GMAIL_SENDER_EMAIL}>`,
+    `To: ${params.to}`,
+    `Subject: ${subject}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    "",
+    params.text || "",
+    "",
+    `--${boundary}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    "",
+    params.html,
+    "",
+    `--${boundary}--`,
+  ].join("\r\n");
+
+  const raw = Buffer.from(message)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  await gmail.users.messages.send({
+    userId: "me",
+    requestBody: { raw },
+  });
 };
 
-// ─── Gmail (Local) ───────────────────────────────
-const sendWithGmail = async (params: EmailParams) => {
+// ─── Gmail SMTP (Local) ──────────────────────────
+const sendWithGmailSmtp = async (params: EmailParams) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -52,13 +77,13 @@ const sendWithGmail = async (params: EmailParams) => {
   });
 };
 
-// ─── Auto-select ────────────────────────────────
+// ─── Auto-select ─────────────────────────────────
 export const sendEmail = async (params: EmailParams) => {
   try {
-    if (process.env.BREVO_API_KEY) {
-      await sendWithBrevo(params);
+    if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN) {
+      await sendWithGmailApi(params);
     } else {
-      await sendWithGmail(params);
+      await sendWithGmailSmtp(params);
     }
     console.log(`📧 Email sent to ${params.to}`);
   } catch (err) {
