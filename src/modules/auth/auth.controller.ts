@@ -4,16 +4,25 @@ import { authService } from "./auth.service.js";
 
 const ACCESS_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict" as const,
+  secure: true,
+  sameSite: "none" as const,
+  path: "/",
   maxAge: 15 * 60 * 1000,
 };
 
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict" as const,
+  secure: true,
+  sameSite: "none" as const,
+  path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const CLEAR_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none" as const,
+  path: "/",
 };
 
 export const registerController: RequestHandler = async (req, res) => {
@@ -63,7 +72,7 @@ export const loginController: RequestHandler = async (req, res) => {
 };
 
 export const refreshController: RequestHandler = async (req, res, next) => {
-  const token = req.cookies?.refreshToken;
+  const token = req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!token) {
     return next(new AppError("توکن نوسازی یافت نشد", 401));
@@ -77,29 +86,25 @@ export const refreshController: RequestHandler = async (req, res, next) => {
   return res.status(200).json({
     status: "success",
     data: {
-      message: "توکن شما با موفقیت تمدید شد",
+      message: "تمدید موفق",
       accessToken,
     },
   });
 };
 
 export const logoutController: RequestHandler = async (req, res) => {
-  const token = req.cookies?.refreshToken;
+  const token =
+    req.cookies?.refreshToken ??
+    (req.headers["x-refresh-token"] as string | undefined) ??
+    req.body?.refreshToken ??
+    null;
+
   if (token) {
     await authService.logout(token);
   }
 
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
+  res.clearCookie("accessToken", CLEAR_COOKIE_OPTIONS);
+  res.clearCookie("refreshToken", CLEAR_COOKIE_OPTIONS);
 
   return res.status(200).json({
     status: "success",
@@ -121,17 +126,8 @@ export const forgotPasswordController: RequestHandler = async (req, res) => {
 export const resetPasswordController: RequestHandler = async (req, res) => {
   const result = await authService.resetPassword(req.body);
 
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
+  res.clearCookie("accessToken", CLEAR_COOKIE_OPTIONS);
+  res.clearCookie("refreshToken", CLEAR_COOKIE_OPTIONS);
 
   return res.status(200).json({
     status: "success",
@@ -164,17 +160,8 @@ export const changePasswordController: RequestHandler = async (req, res) => {
   const userId = req.user!.id;
   const result = await authService.changePassword(userId, req.body);
 
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
+  res.clearCookie("accessToken", CLEAR_COOKIE_OPTIONS);
+  res.clearCookie("refreshToken", CLEAR_COOKIE_OPTIONS);
 
   return res.status(200).json({
     status: "success",
@@ -199,17 +186,8 @@ export const verifyChangeEmailController: RequestHandler = async (req, res) => {
   const userId = req.user!.id;
   const result = await authService.verifyChangeEmail(userId, req.body);
 
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
+  res.clearCookie("accessToken", CLEAR_COOKIE_OPTIONS);
+  res.clearCookie("refreshToken", CLEAR_COOKIE_OPTIONS);
 
   return res.status(200).json({
     status: "success",

@@ -1,5 +1,5 @@
 import cookieParser from "cookie-parser";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -41,23 +41,18 @@ app.use(
 
 // ─── CORS
 const allowedOrigins = [
-  process.env.BACKEND_URL || "http://localhost:3000",
-  process.env.FRONTEND_URL || "http://localhost:5173",
-  ...(process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
-    : []),
-];
+  process.env.BACKEND_URL,
+  process.env.FRONTEND_URL,
+  ...(process.env.CORS_ORIGINS?.split(",") ?? []),
+].filter(Boolean) as string[];
 
-const corsOptions = {
-  origin: (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void,
-  ) => {
+const corsOptions: CorsOptions = {
+  origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
+      return callback(null, true);
     }
+
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
   optionsSuccessStatus: 200,
@@ -69,6 +64,7 @@ const corsOptions = {
     "X-RateLimit-Remaining",
   ],
 };
+
 app.use(cors(corsOptions));
 
 // ─── Body parser
@@ -93,7 +89,7 @@ const globalLimiter = rateLimit({
     },
   },
 });
-app.use(globalLimiter);
+app.use("/api", globalLimiter);
 
 // ─── Swagger
 app.use(
@@ -128,6 +124,11 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/discounts", discountRoutes);
 app.use("/api/overview", overviewRoutes);
 
+if (process.env.ENABLE_TEST_ROUTES === "true") {
+  app.get("/test-500", (_req, _res, next) => {
+    next(new Error("Manual test 500 error for Telegram notification"));
+  });
+}
 // ─── 404 Handler
 app.use((req, res) => {
   res.status(404).json({

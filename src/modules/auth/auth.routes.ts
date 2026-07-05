@@ -4,6 +4,7 @@ import {
   changeEmailLimiter,
   forgotPasswordLimiter,
   loginLimiter,
+  registerIpLimiter,
   registerLimiter,
   resendResetCodeLimiter,
   resendVerificationLimiter,
@@ -42,21 +43,25 @@ const router = Router();
 
 router.post(
   "/register",
+  registerIpLimiter,
   registerLimiter,
   validate(registerSchema),
   asyncHandler(registerController),
 );
+
 router.post(
   "/verify-email",
   validate(verifyEmailSchema),
   asyncHandler(verifyEmailController),
 );
+
 router.post(
   "/login",
   loginLimiter,
   validate(loginSchema),
   asyncHandler(loginController),
 );
+
 router.post("/refresh", asyncHandler(refreshController));
 router.post("/logout", asyncHandler(logoutController));
 

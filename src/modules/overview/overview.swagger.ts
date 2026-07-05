@@ -130,7 +130,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "خلاصه کامل داشبورد ادمین.",
+            description: "Stats for all admin sections.",
             content: {
               "application/json": {
                 example: {
@@ -153,7 +153,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار کاربران.",
+            description: "Stats of users.",
             content: {
               "application/json": {
                 example: {
@@ -176,7 +176,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار دوره‌ها.",
+            description: "Stats of courses.",
             content: {
               "application/json": {
                 example: {
@@ -199,7 +199,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار سفارش‌ها.",
+            description: "Stats of orders.",
             content: {
               "application/json": {
                 example: {
@@ -224,7 +224,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار درآمد.",
+            description: "Stats of revenue.",
             content: {
               "application/json": {
                 example: {
@@ -247,7 +247,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار کدهای تخفیف.",
+            description: "Stats of discount codes.",
             content: {
               "application/json": {
                 example: {
@@ -270,7 +270,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار کامنت‌ها.",
+            description: "Stats of comments.",
             content: {
               "application/json": {
                 example: {
@@ -293,7 +293,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار پست‌ها.",
+            description: "Stats of posts.",
             content: {
               "application/json": {
                 example: {
@@ -316,7 +316,7 @@ export const overviewSwagger = {
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "آمار ثبت‌نام‌ها.",
+            description: "Stats of course enrollments.",
             content: {
               "application/json": {
                 example: {

@@ -1,36 +1,35 @@
 import type { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { TokenPayload } from "../modules/auth/auth.types.js";
 import { AppError } from "../utils/AppError.js";
 import { verifyAccessToken } from "../utils/jwt.js";
+
+function getBearerToken(authHeader?: string): string | null {
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  return authHeader.split(" ")[1];
+}
+
+function tryVerifyToken(token?: string | null): TokenPayload | null {
+  if (!token) return null;
+
+  try {
+    return verifyAccessToken(token) as TokenPayload;
+  } catch {
+    return null;
+  }
+}
 
 export const authentication = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  let accessToken = req.cookies?.accessToken;
+  const bearerToken = getBearerToken(req.headers.authorization);
+  const cookieToken = req.cookies?.accessToken ?? null;
+  const decoded = tryVerifyToken(bearerToken) ?? tryVerifyToken(cookieToken);
 
-  if (!accessToken && req.headers.authorization?.startsWith("Bearer ")) {
-    accessToken = req.headers.authorization.split(" ")[1];
-  }
-
-  if (!accessToken) {
+  if (!decoded) {
     return next(new AppError("توکن شما معتبر نیست، لطفا ابتدا وارد شوید", 401));
-  }
-
-  let decoded: TokenPayload;
-  try {
-    decoded = verifyAccessToken(accessToken) as TokenPayload;
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      return next(new AppError("توکن منقضی شده است. مجدداً وارد شوید", 401));
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      return next(new AppError("توکن نامعتبر است. مجدداً وارد شوید", 401));
-    }
-    return next(error);
   }
 
   try {

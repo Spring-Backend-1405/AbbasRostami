@@ -8,7 +8,6 @@ interface EmailParams {
   text?: string;
 }
 
-// ─── Gmail API (Production - Render) ────────────
 const sendWithGmailApi = async (params: EmailParams) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GMAIL_CLIENT_ID,
@@ -58,7 +57,6 @@ const sendWithGmailApi = async (params: EmailParams) => {
   });
 };
 
-// ─── Gmail SMTP (Local) ──────────────────────────
 const sendWithGmailSmtp = async (params: EmailParams) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -77,7 +75,6 @@ const sendWithGmailSmtp = async (params: EmailParams) => {
   });
 };
 
-// ─── Auto-select ─────────────────────────────────
 export const sendEmail = async (params: EmailParams) => {
   try {
     if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN) {
@@ -88,5 +85,6 @@ export const sendEmail = async (params: EmailParams) => {
     console.log(`📧 Email sent to ${params.to}`);
   } catch (err) {
     console.error("❌ Email send failed:", err);
+    throw err;
   }
 };

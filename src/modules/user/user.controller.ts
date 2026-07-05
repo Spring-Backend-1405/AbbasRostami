@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import { userService } from "./user.service.js";
+import { ListUsersQuery } from "./user.validator.js";
 
 export const getProfileController: RequestHandler = async (req, res) => {
   const userId = req.user!.id;
@@ -69,5 +70,24 @@ export const getProfileOverviewController: RequestHandler = async (
   return res.status(200).json({
     status: "success",
     data: { overview },
+  });
+};
+
+export const getUsersController: RequestHandler = async (req, res) => {
+  const result = await userService.getUsers(req.query as ListUsersQuery);
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const getUserByIdController: RequestHandler = async (req, res) => {
+  const id = req.params.id as string;
+  const user = await userService.getUserById(id);
+
+  return res.status(200).json({
+    status: "success",
+    data: { user },
   });
 };

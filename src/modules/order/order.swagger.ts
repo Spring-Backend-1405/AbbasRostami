@@ -201,7 +201,7 @@ export const orderSwagger = {
               type: "string",
               enum: ["PENDING", "PAID", "CANCELLED"],
             },
-            description: "فیلتر بر اساس وضعیت سفارش",
+            description: "Filter by Status",
           },
         ],
         responses: {
@@ -265,13 +265,13 @@ export const orderSwagger = {
               type: "string",
               enum: ["PENDING", "PAID", "CANCELLED"],
             },
-            description: "فیلتر وضعیت سفارش",
+            description: "Filter by Status",
           },
           {
             name: "search",
             in: "query",
             schema: { type: "string", maxLength: 100 },
-            description: "جستجو بر اساس نام یا ایمیل کاربر",
+            description: "Search by user name or email",
           },
         ],
         responses: {

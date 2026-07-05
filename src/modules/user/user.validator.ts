@@ -10,4 +10,23 @@ export const updateProfileSchema = z.object({
   }),
 });
 
+export const listUsersSchema = z.object({
+  query: z.object({
+    page: z.string().regex(/^\d+$/).optional(),
+    limit: z.string().regex(/^\d+$/).optional(),
+    search: z.string().max(100).optional(),
+    role: z.enum(["USER", "ADMIN"]).optional(),
+    isVerified: z.enum(["true", "false"]).optional(),
+    sortBy: z.enum(["createdAt", "name", "email"]).optional(),
+    order: z.enum(["asc", "desc"]).optional(),
+  }),
+});
+
+export const getUserByIdSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("شناسه کاربر نامعتبر است"),
+  }),
+});
+
+export type ListUsersQuery = z.infer<typeof listUsersSchema>["query"];
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>["body"];

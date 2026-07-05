@@ -36,8 +36,8 @@ export const userSwagger = {
     "/api/users/profile": {
       get: {
         tags: ["User"],
-        summary: "Get user info.",
-        description: "Gets the data for the currently authenticated user",
+        summary: "Get user info",
+        description: "Gets the data for the currently authenticated user.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
@@ -52,8 +52,11 @@ export const userSwagger = {
                       email: "abbas@example.com",
                       name: "عباس رستمی",
                       phone: "09123456789",
-                      avatar: "/uploads/avatars/avatar-uuid.png",
+                      avatar:
+                        "https://res.cloudinary.com/.../avatars/avatar.jpg",
+                      role: "USER",
                       createdAt: "2026-06-17T14:00:00.000Z",
+                      updatedAt: "2026-07-01T10:30:00.000Z",
                     },
                   },
                 },
@@ -61,10 +64,7 @@ export const userSwagger = {
             },
           },
           401: { description: "Unauthorized: Invalid or expired token." },
-          404: {
-            description:
-              "User not found. This should not happen for an authenticated user.",
-          },
+          404: { description: "User not found." },
         },
       },
       put: {
@@ -113,7 +113,9 @@ export const userSwagger = {
                       email: "abbas@example.com",
                       name: "عباس رستمی ویرایش شده",
                       phone: "09121112233",
-                      avatar: "/uploads/avatars/avatar-new-uuid.png",
+                      avatar:
+                        "https://res.cloudinary.com/.../avatars/avatar.jpg",
+                      role: "USER",
                     },
                   },
                 },
@@ -121,7 +123,7 @@ export const userSwagger = {
             },
           },
           400: {
-            description: "Validation error",
+            description: "Validation error.",
             content: {
               "application/json": {
                 example: {
@@ -143,7 +145,7 @@ export const userSwagger = {
         tags: ["User"],
         summary: "Wipe user avatar",
         description:
-          "Deletes the physical avatar file and resets the database pointer to null.",
+          "Deletes the avatar file from cloud storage and resets the database pointer to null.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
@@ -158,6 +160,162 @@ export const userSwagger = {
             },
           },
           401: { description: "Unauthorized: Invalid or expired token." },
+        },
+      },
+    },
+    "/api/users": {
+      get: {
+        tags: ["User"],
+        summary: "List all users (Admin)",
+        description:
+          "Returns a paginated list of all users with search, filter, and sort options. Admin only.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "string", example: "1" },
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "string", example: "10" },
+          },
+          {
+            name: "search",
+            in: "query",
+            schema: { type: "string", example: "عباس" },
+            description: "Search by email and name",
+          },
+          {
+            name: "role",
+            in: "query",
+            schema: { type: "string", enum: ["USER", "ADMIN"] },
+            description: "Filter by Role",
+          },
+          {
+            name: "isVerified",
+            in: "query",
+            schema: { type: "string", enum: ["true", "false"] },
+            description: "Filter by isVerified EMAIL",
+          },
+          {
+            name: "sortBy",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["createdAt", "name", "email"],
+              default: "createdAt",
+            },
+            description: "Sort by",
+          },
+          {
+            name: "order",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["asc", "desc"],
+              default: "desc",
+            },
+            description: "Sort by order",
+          },
+        ],
+        responses: {
+          200: {
+            description: "List of users.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    items: [
+                      {
+                        id: "acd482db-ca56-446c-95ca-ab29d92fb6ad",
+                        email: "user@example.com",
+                        name: "عباس رستمی",
+                        phone: "09121112233",
+                        avatar:
+                          "https://res.cloudinary.com/.../avatars/avatar.jpg",
+                        role: "USER",
+                        isVerified: true,
+                        createdAt: "2026-07-04T19:33:13.603Z",
+                        stats: {
+                          enrollments: 3,
+                          orders: 5,
+                          comments: 12,
+                        },
+                      },
+                    ],
+                    pagination: {
+                      total: 25,
+                      page: 1,
+                      limit: 10,
+                      totalPages: 3,
+                      hasNextPage: true,
+                      hasPrevPage: false,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          403: { description: "Forbidden: Admin access required." },
+        },
+      },
+    },
+    "/api/users/{id}": {
+      get: {
+        tags: ["User"],
+        summary: "Get user details (Admin)",
+        description:
+          "Returns detailed information about a specific user including wallet balance and activity stats. Admin only.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "User details.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    user: {
+                      id: "acd482db-ca56-446c-95ca-ab29d92fb6ad",
+                      email: "user@example.com",
+                      name: "عباس رستمی",
+                      phone: "09121112233",
+                      avatar:
+                        "https://res.cloudinary.com/.../avatars/avatar.jpg",
+                      role: "USER",
+                      isVerified: true,
+                      createdAt: "2026-07-04T19:33:13.603Z",
+                      updatedAt: "2026-07-04T20:15:00.000Z",
+                      walletBalance: 150000,
+                      stats: {
+                        enrollments: 3,
+                        orders: 5,
+                        comments: 12,
+                        favoriteCourses: 4,
+                        favoritePosts: 2,
+                        reactions: 25,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          403: { description: "Forbidden: Admin access required." },
+          404: { description: "User not found." },
         },
       },
     },

@@ -1,4 +1,17 @@
+import type { Request } from "express";
 import { ipKeyGenerator, rateLimit } from "express-rate-limit";
+
+const getIp = (req: Request) => ipKeyGenerator(req.ip ?? "unknown");
+
+const getEmail = (req: Request) => {
+  const email = req.body?.email;
+  return typeof email === "string" ? email.trim().toLowerCase() : undefined;
+};
+
+const jsonMessage = (message: string) => ({
+  status: "fail",
+  data: { message },
+});
 
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -7,16 +20,22 @@ export const loginLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const email = (req.body?.email as string)?.toLowerCase();
-    const ip = ipKeyGenerator(req.ip ?? "unknown");
-    return email ? `${ip}:${email}` : ip;
+    const email = getEmail(req);
+    const ip = getIp(req);
+    return email ? `login:${ip}:${email}` : `login:${ip}`;
   },
-  message: {
-    status: "fail",
-    data: {
-      message: "تعداد تلاش‌ های ناموفق بیش از حد. ۱۵ دقیقه دیگر تلاش کنید.",
-    },
-  },
+  message: jsonMessage(
+    "تعداد تلاش‌ های ناموفق بیش از حد. ۱۵ دقیقه دیگر تلاش کنید.",
+  ),
+});
+
+export const registerIpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: (req) => `register-ip:${getIp(req)}`,
+  message: jsonMessage("تعداد درخواست ثبت‌نام از این IP بیش از حد مجاز است."),
 });
 
 export const registerLimiter = rateLimit({
@@ -24,12 +43,12 @@ export const registerLimiter = rateLimit({
   limit: 5,
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: {
-    status: "fail",
-    data: {
-      message: "محدودیت ثبت‌ نام. لطفاً بعداً تلاش کنید.",
-    },
+  keyGenerator: (req) => {
+    const email = getEmail(req);
+    const ip = getIp(req);
+    return email ? `register:${ip}:${email}` : `register:${ip}`;
   },
+  message: jsonMessage("محدودیت ثبت‌ نام. لطفاً بعداً تلاش کنید."),
 });
 
 export const forgotPasswordLimiter = rateLimit({
@@ -38,16 +57,13 @@ export const forgotPasswordLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const email = (req.body?.email as string)?.toLowerCase();
-    const ip = ipKeyGenerator(req.ip ?? "unknown");
+    const email = getEmail(req);
+    const ip = getIp(req);
     return email ? `forgot-pwd:${ip}:${email}` : `forgot-pwd:${ip}`;
   },
-  message: {
-    status: "fail",
-    data: {
-      message: "تعداد درخواست‌ها بیش از حد. لطفاً ۱ ساعت دیگر تلاش کنید.",
-    },
-  },
+  message: jsonMessage(
+    "تعداد درخواست‌ها بیش از حد. لطفاً ۱ ساعت دیگر تلاش کنید.",
+  ),
 });
 
 export const resetPasswordLimiter = rateLimit({
@@ -56,16 +72,11 @@ export const resetPasswordLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const email = (req.body?.email as string)?.toLowerCase();
-    const ip = ipKeyGenerator(req.ip ?? "unknown");
+    const email = getEmail(req);
+    const ip = getIp(req);
     return email ? `reset-pwd:${ip}:${email}` : `reset-pwd:${ip}`;
   },
-  message: {
-    status: "fail",
-    data: {
-      message: "تعداد تلاش‌های ناموفق بیش از حد.",
-    },
-  },
+  message: jsonMessage("تعداد تلاش‌های ناموفق بیش از حد."),
 });
 
 export const resendVerificationLimiter = rateLimit({
@@ -74,16 +85,13 @@ export const resendVerificationLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const email = (req.body?.email as string)?.toLowerCase();
-    const ip = ipKeyGenerator(req.ip ?? "unknown");
+    const email = getEmail(req);
+    const ip = getIp(req);
     return email ? `resend-verify:${ip}:${email}` : `resend-verify:${ip}`;
   },
-  message: {
-    status: "fail",
-    data: {
-      message: "تعداد درخواست‌ها بیش از حد. لطفاً ۵ دقیقه دیگر تلاش کنید.",
-    },
-  },
+  message: jsonMessage(
+    "تعداد درخواست‌ها بیش از حد. لطفاً ۵ دقیقه دیگر تلاش کنید.",
+  ),
 });
 
 export const resendResetCodeLimiter = rateLimit({
@@ -92,16 +100,13 @@ export const resendResetCodeLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const email = (req.body?.email as string)?.toLowerCase();
-    const ip = ipKeyGenerator(req.ip ?? "unknown");
+    const email = getEmail(req);
+    const ip = getIp(req);
     return email ? `resend-reset:${ip}:${email}` : `resend-reset:${ip}`;
   },
-  message: {
-    status: "fail",
-    data: {
-      message: "تعداد درخواست‌ها بیش از حد. لطفاً ۵ دقیقه دیگر تلاش کنید.",
-    },
-  },
+  message: jsonMessage(
+    "تعداد درخواست‌ها بیش از حد. لطفاً ۵ دقیقه دیگر تلاش کنید.",
+  ),
 });
 
 export const changeEmailLimiter = rateLimit({
@@ -110,14 +115,15 @@ export const changeEmailLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const ip = ipKeyGenerator(req.ip ?? "unknown");
-    return `change-email:${ip}`;
+    const ip = getIp(req);
+    const newEmail =
+      typeof req.body?.newEmail === "string"
+        ? req.body.newEmail.trim().toLowerCase()
+        : undefined;
+
+    return newEmail ? `change-email:${ip}:${newEmail}` : `change-email:${ip}`;
   },
-  message: {
-    status: "fail",
-    data: {
-      message:
-        "تعداد درخواست‌های تغییر ایمیل بیش از حد. ۱ ساعت دیگر تلاش کنید.",
-    },
-  },
+  message: jsonMessage(
+    "تعداد درخواست‌های تغییر ایمیل بیش از حد. ۱ ساعت دیگر تلاش کنید.",
+  ),
 });

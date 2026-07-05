@@ -106,7 +106,7 @@ export const discountSwagger = {
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
           409: {
-            description: "کد تکراری.",
+            description: "Conflict: Discount code already exists.",
             content: {
               "application/json": {
                 example: {
@@ -164,8 +164,8 @@ export const discountSwagger = {
               },
             },
           },
-          401: { description: "Unauthorized." },
-          403: { description: "Admin only." },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          403: { description: "Forbidden: Admin access required." },
         },
       },
     },
