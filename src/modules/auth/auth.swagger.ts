@@ -3,7 +3,7 @@ export const authSwagger = {
     "/api/auth/register": {
       post: {
         tags: ["Auth"],
-        summary: "Register a new account",
+        summary: "Register a new account (STEP 1)",
         description:
           "Creates an unverified account and triggers a 6-digit OTP code to the email.",
         requestBody: {
@@ -42,17 +42,22 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: {
-                    email: "کاربری با این ایمیل قبلاً ثبت‌نام کرده است",
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- email:
+  - Must not be empty.
+  - Must be a valid email address.
+
+- password:
+  - Must not be empty.
+  - Must be a string.
+  - Min length: 6.
+
+- name:
+  - Optional.
+  - Must be a string.
+
+- Duplicate email may also return 400.`,
           },
         },
       },
@@ -60,7 +65,7 @@ export const authSwagger = {
     "/api/auth/verify-email": {
       post: {
         tags: ["Auth"],
-        summary: "Verify OTP code & Auto-Login",
+        summary: "Verify OTP code & Auto-Login (STEP 2)",
         description:
           "Validates the 6-digit email code. Sets HTTP-Only cookies on success.",
         requestBody: {
@@ -104,17 +109,17 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "خطای اشتباه بودن کد یا منقضی شدن آن.",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: {
-                    code: "کد تایید اشتباه است",
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- email:
+  - Must not be empty.
+  - Must be a valid email address.
+
+- code:
+  - Must not be empty.
+  - Must be exactly 6 characters.
+
+- Invalid code, expired code, or already verified may also return 400.`,
           },
         },
       },
@@ -162,6 +167,16 @@ export const authSwagger = {
                 },
               },
             },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- email:
+  - Must not be empty.
+  - Must be a valid email address.
+
+- password:
+  - Must not be empty.`,
           },
           401: {
             description: "Email or password is incorrect.",
@@ -276,15 +291,11 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: { email: "ایمیل وارد شده معتبر نیست" },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- email:
+  - Must not be empty.
+  - Must be a valid email address.`,
           },
           429: {
             description: "Rate limit exceeded (3 requests per hour)",
@@ -353,34 +364,22 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "Invalid code, expired, or validation error",
-            content: {
-              "application/json": {
-                examples: {
-                  invalidCode: {
-                    summary: "کد اشتباه",
-                    value: {
-                      status: "fail",
-                      data: { code: "کد وارد شده صحیح نیست" },
-                    },
-                  },
-                  expiredCode: {
-                    summary: "کد منقضی",
-                    value: {
-                      status: "fail",
-                      data: { code: "کد منقضی شده است، دوباره درخواست دهید" },
-                    },
-                  },
-                  noRequest: {
-                    summary: "بدون درخواست قبلی",
-                    value: {
-                      status: "fail",
-                      data: { code: "ابتدا درخواست بازیابی رمز عبور دهید" },
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- email:
+  - Must not be empty.
+  - Must be a valid email address.
+
+- code:
+  - Must not be empty.
+  - Must be exactly 6 characters.
+
+- newPassword:
+  - Must not be empty.
+  - Must be a string.
+  - Min length: 6.
+
+- Invalid code, expired code, or no prior reset request may also return 400.`,
           },
           429: {
             description: "Rate limit exceeded (5 attempts per 15 min)",
@@ -428,15 +427,11 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: { email: "ایمیل وارد شده معتبر نیست" },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- email:
+  - Must not be empty.
+  - Must be a valid email address.`,
           },
           429: {
             description: "Rate limit exceeded (3 per 5 min)",
@@ -484,20 +479,50 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "بدون درخواست reset قبلی",
-            content: {
-              "application/json": {
-                example: {
-                  status: "error",
-                  message: "ابتدا درخواست بازیابی رمز عبور دهید",
-                  code: 400,
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- email:
+  - Must not be empty.
+  - Must be a valid email address.
+
+- User must have a prior forgot-password request.`,
           },
           429: {
             description: "Rate limit exceeded (3 per 5 min)",
           },
+        },
+      },
+    },
+    "/api/auth/resend-change-email-code": {
+      post: {
+        tags: ["Auth"],
+        summary: "Resend change email verification code",
+        description:
+          "Resends the 6-digit verification code to the pending new email. User must have already requested email change. Rate limited: 3 per 5 min.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Code resent successfully.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    message: "کد تایید مجدداً به ایمیل جدید ارسال شد",
+                    newEmail: "new@example.com",
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- User must have a pending email change request.
+- No body fields required (user is identified by auth token).`,
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          429: { description: "Rate limit exceeded (3 per 5 min)." },
         },
       },
     },
@@ -553,41 +578,17 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "Validation error or wrong current password",
-            content: {
-              "application/json": {
-                examples: {
-                  wrongPassword: {
-                    summary: "رمز فعلی اشتباه",
-                    value: {
-                      status: "fail",
-                      data: {
-                        currentPassword: "رمز عبور فعلی صحیح نیست",
-                      },
-                    },
-                  },
-                  samePassword: {
-                    summary: "رمز جدید مثل رمز فعلی",
-                    value: {
-                      status: "fail",
-                      data: {
-                        newPassword:
-                          "رمز عبور جدید نباید با رمز فعلی یکسان باشد",
-                      },
-                    },
-                  },
-                  tooShort: {
-                    summary: "رمز کوتاه",
-                    value: {
-                      status: "fail",
-                      data: {
-                        newPassword: "رمز عبور جدید باید حداقل ۶ کاراکتر باشد",
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- currentPassword:
+  - Must not be empty.
+  - Must match the user's current password.
+
+- newPassword:
+  - Must not be empty.
+  - Must be a string.
+  - Min length: 6.
+  - Must not be the same as currentPassword.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           404: { description: "User not found." },
@@ -651,36 +652,17 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "Validation error or password mismatch",
-            content: {
-              "application/json": {
-                examples: {
-                  wrongPassword: {
-                    summary: "رمز اشتباه",
-                    value: {
-                      status: "fail",
-                      data: { password: "رمز عبور صحیح نیست" },
-                    },
-                  },
-                  sameEmail: {
-                    summary: "همون ایمیل فعلی",
-                    value: {
-                      status: "fail",
-                      data: { newEmail: "ایمیل جدید همان ایمیل فعلی است" },
-                    },
-                  },
-                  taken: {
-                    summary: "ایمیل گرفته شده",
-                    value: {
-                      status: "fail",
-                      data: {
-                        newEmail: "کاربر دیگری با این ایمیل ثبت‌نام کرده است",
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- newEmail:
+  - Must not be empty.
+  - Must be a valid email address.
+  - Must not be the same as current email.
+  - Must not already be registered by another user.
+
+- password:
+  - Must not be empty.
+  - Must match the user's current password.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           429: { description: "Rate limit exceeded (3 per hour)." },
@@ -729,34 +711,14 @@ export const authSwagger = {
             },
           },
           400: {
-            description: "Invalid code or expired",
-            content: {
-              "application/json": {
-                examples: {
-                  invalidCode: {
-                    summary: "کد اشتباه",
-                    value: {
-                      status: "fail",
-                      data: { code: "کد وارد شده صحیح نیست" },
-                    },
-                  },
-                  expiredCode: {
-                    summary: "کد منقضی",
-                    value: {
-                      status: "fail",
-                      data: { code: "کد منقضی شده است، دوباره درخواست دهید" },
-                    },
-                  },
-                  noRequest: {
-                    summary: "بدون درخواست قبلی",
-                    value: {
-                      status: "fail",
-                      data: { code: "ابتدا درخواست تغییر ایمیل دهید" },
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- code:
+  - Must not be empty.
+  - Must be exactly 6 characters.
+
+- Invalid code, expired code, or no prior change email request may also return 400.
+- Email taken by another user during the process may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
         },

@@ -6,6 +6,7 @@ import {
   loginLimiter,
   registerIpLimiter,
   registerLimiter,
+  resendChangeEmailCodeLimiter,
   resendResetCodeLimiter,
   resendVerificationLimiter,
   resetPasswordLimiter,
@@ -20,6 +21,7 @@ import {
   refreshController,
   registerController,
   requestChangeEmailController,
+  resendChangeEmailCodeController,
   resendResetCodeController,
   resendVerificationController,
   resetPasswordController,
@@ -113,6 +115,13 @@ router.post(
   authentication,
   validate(verifyChangeEmailSchema),
   asyncHandler(verifyChangeEmailController),
+);
+
+router.post(
+  "/resend-change-email-code",
+  authentication,
+  resendChangeEmailCodeLimiter,
+  asyncHandler(resendChangeEmailCodeController),
 );
 
 export default router;

@@ -194,3 +194,16 @@ export const verifyChangeEmailController: RequestHandler = async (req, res) => {
     data: result,
   });
 };
+
+export const resendChangeEmailCodeController: RequestHandler = async (
+  req,
+  res,
+) => {
+  const userId = req.user!.id;
+  const result = await authService.resendChangeEmailCode(userId);
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};

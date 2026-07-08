@@ -65,13 +65,23 @@ export const authService = {
       verificationCode,
     );
 
-    sendEmail({
-      to: user.email,
-      subject: "🔑 کد تایید حساب کاربری",
-      html: emailHtml,
-      text: `کد تایید شما: ${verificationCode}`,
-    }).catch((err) => console.error("❌ Error sending email:", err));
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "🔑 کد تایید حساب کاربری",
+        html: emailHtml,
+        text: `کد تایید شما: ${verificationCode}`,
+      });
+    } catch (err) {
+      console.error("❌ Error sending verification email:", err);
 
+      await prisma.user.delete({ where: { id: user.id } });
+
+      throw new AppError(
+        "ارسال ایمیل تایید ناموفق بود. لطفاً دوباره تلاش کنید.",
+        500,
+      );
+    }
     return { email: user.email, message: "کد تایید به ایمیل شما ارسال شد" };
   },
 
@@ -92,6 +102,10 @@ export const authService = {
 
     if (user.verificationCode !== data.code) {
       throw new AppError("کد تایید اشتباه است", 400);
+    }
+
+    if (user.isBanned) {
+      throw new AppError("حساب کاربری شما مسدود شده است", 403);
     }
 
     const accessToken = generateAccessToken({ id: user.id, email: user.email });
@@ -131,6 +145,10 @@ export const authService = {
       );
     }
 
+    if (user.isBanned) {
+      throw new AppError("حساب کاربری شما مسدود شده است", 403);
+    }
+
     const isMatch = await comparePassword(data.password, user.password);
     if (!isMatch) {
       throw new AppError("ایمیل یا رمز عبور اشتباه است", 401);
@@ -164,6 +182,14 @@ export const authService = {
           });
         }
         throw new AppError("توکن نوسازی نامعتبر یا منقضی شده است", 401);
+      }
+
+      if (user.isBanned) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { refreshToken: null },
+        });
+        throw new AppError("حساب کاربری شما مسدود شده است", 403);
       }
 
       const newAccessToken = generateAccessToken({
@@ -334,7 +360,7 @@ export const authService = {
     }
 
     if (!user.resetPasswordCode) {
-      throw new AppError("ابتدا درخواست بازیابی رمز عبور دهید", 400);
+      return genericMessage;
     }
 
     const resetCode = generateCode();
@@ -524,6 +550,47 @@ export const authService = {
 
     return {
       message: "ایمیل شما با موفقیت تغییر یافت. لطفاً مجدداً وارد شوید",
+      newEmail: user.pendingNewEmail,
+    };
+  },
+
+  async resendChangeEmailCode(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      throw new AppError("کاربر یافت نشد", 404);
+    }
+
+    if (!user.pendingNewEmail) {
+      throw new AppError("ابتدا درخواست تغییر ایمیل دهید", 400);
+    }
+
+    const code = generateCode();
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        changeEmailCode: code,
+        changeEmailExpires: expires,
+      },
+    });
+
+    const emailHtml = getChangeEmailTemplate(
+      user.name || "کاربر گرامی",
+      user.pendingNewEmail,
+      code,
+    );
+
+    sendEmail({
+      to: user.pendingNewEmail,
+      subject: "📧 تایید تغییر ایمیل",
+      html: emailHtml,
+      text: `کد تایید: ${code}`,
+    }).catch((err) => console.error("❌ Error sending change email:", err));
+
+    return {
+      message: "کد تایید مجدداً به ایمیل جدید ارسال شد",
       newEmail: user.pendingNewEmail,
     };
   },
