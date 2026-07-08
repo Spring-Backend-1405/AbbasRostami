@@ -78,12 +78,13 @@ model User {
   password            String
   role                Role      @default(USER)
   isVerified          Boolean   @default(false)
+  isBanned            Boolean   @default(false)
+  bannedAt            DateTime?
   verificationCode    String?
   verificationExpires DateTime?
   refreshToken        String?
   resetPasswordCode     String?
   resetPasswordExpires  DateTime?
-
   pendingNewEmail       String?
   changeEmailCode       String?
   changeEmailExpires    DateTime?
@@ -111,6 +112,7 @@ model Wallet {
   updatedAt DateTime @updatedAt
 }
 
+// Transaction
 model Transaction {
   id          String            @id @default(uuid())
   amount      Int
@@ -132,7 +134,6 @@ model Transaction {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([authority])
   @@index([userId, status])
   @@index([userId, type])
   @@index([orderId])
@@ -156,6 +157,17 @@ model Category {
   @@index([show])
 }
 
+// Teacher
+model Teacher {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  bio       String?
+  avatar    String?
+  courses   Course[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 // COURSE
 model Course {
@@ -168,8 +180,11 @@ model Course {
   level       CourseLevel @default(BEGINNER)
   published   Boolean     @default(false)
 
-  categoryId  String?
-  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  teacherId   String
+  teacher     Teacher     @relation(fields: [teacherId], references: [id], onDelete: Restrict)
 
   cartItems    CartItem[]
   orderItems   OrderItem[]
@@ -276,11 +291,7 @@ model OrderItem {
   @@index([orderId])
   @@index([courseId])
 }
-
-// ─────────────────────────────────────────
 // COMMENTS
-// ─────────────────────────────────────────
-
 model Comment {
   id       String @id @default(uuid())
   content  String
@@ -350,8 +361,8 @@ model Post {
   imageUrl   String?
   published  Boolean  @default(false)
 
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   comments   Comment[]
   favorites  BlogFavorite[]
@@ -363,7 +374,6 @@ model Post {
   @@index([published])
   @@index([categoryId])
 }
-
 
 // FAVORITES
 model CourseFavorite {
@@ -416,6 +426,5 @@ model Discount {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  @@index([code])
   @@index([active])
 }

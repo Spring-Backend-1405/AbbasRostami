@@ -58,69 +58,21 @@ export const getReactionCountsForList = async (
   const userReactionMap = new Map<string, "LIKE" | "DISLIKE">();
 
   if (userId) {
-    if (field === "courseId") {
-      const userReactions = await prisma.reaction.findMany({
-        where: {
-          courseId: { in: targetIds },
-          userId,
-        },
-        select: {
-          courseId: true,
-          type: true,
-        },
-      });
+    const userReactions = await prisma.reaction.findMany({
+      where: {
+        [field]: { in: targetIds },
+        userId,
+      },
+      select: {
+        [field]: true,
+        type: true,
+      },
+    });
 
-      for (const reaction of userReactions) {
-        if (reaction.courseId) {
-          userReactionMap.set(
-            reaction.courseId,
-            reaction.type as "LIKE" | "DISLIKE",
-          );
-        }
-      }
-    }
-
-    if (field === "commentId") {
-      const userReactions = await prisma.reaction.findMany({
-        where: {
-          commentId: { in: targetIds },
-          userId,
-        },
-        select: {
-          commentId: true,
-          type: true,
-        },
-      });
-
-      for (const reaction of userReactions) {
-        if (reaction.commentId) {
-          userReactionMap.set(
-            reaction.commentId,
-            reaction.type as "LIKE" | "DISLIKE",
-          );
-        }
-      }
-    }
-
-    if (field === "postId") {
-      const userReactions = await prisma.reaction.findMany({
-        where: {
-          postId: { in: targetIds },
-          userId,
-        },
-        select: {
-          postId: true,
-          type: true,
-        },
-      });
-
-      for (const reaction of userReactions) {
-        if (reaction.postId) {
-          userReactionMap.set(
-            reaction.postId,
-            reaction.type as "LIKE" | "DISLIKE",
-          );
-        }
+    for (const reaction of userReactions) {
+      const id = (reaction as any)[field] as string | null;
+      if (id) {
+        userReactionMap.set(id, reaction.type as "LIKE" | "DISLIKE");
       }
     }
   }

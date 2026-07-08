@@ -112,8 +112,13 @@ export const requestPayment = async (
       }),
     });
 
+    if (!response.ok) {
+      return {
+        success: false,
+        error: `خطای HTTP از درگاه پرداخت: ${response.status}`,
+      };
+    }
     const result = await response.json();
-
     if (result.data?.code === 100) {
       return {
         success: true,
@@ -156,6 +161,12 @@ export const verifyPayment = async (
       }),
     });
 
+    if (!response.ok) {
+      return {
+        success: false,
+        error: `خطای HTTP از درگاه پرداخت: ${response.status}`,
+      };
+    }
     const result = await response.json();
 
     if (result.data?.code === 100) {

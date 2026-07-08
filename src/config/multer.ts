@@ -57,3 +57,15 @@ export const uploadPostImage = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: imageFilter,
 }).single("image");
+
+export const uploadEditorImage = multer({
+  storage: createCloudinaryStorage("editor"),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageFilter,
+}).single("image");
+
+export const uploadTeacherAvatar = multer({
+  storage: createCloudinaryStorage("teachers"),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: imageFilter,
+}).single("avatar");

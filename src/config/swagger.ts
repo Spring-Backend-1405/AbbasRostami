@@ -12,6 +12,8 @@ import { overviewSwagger } from "../modules/overview/overview.swagger.js";
 import { postSwagger } from "../modules/post/post.swagger.js";
 import { reactionSwagger } from "../modules/reaction/reaction.swagger.js";
 import { searchSwagger } from "../modules/search/search.swagger.js";
+import { teacherSwagger } from "../modules/teacher/teacher.swagger.js";
+import { uploadSwagger } from "../modules/upload/upload.swagger.js";
 import { userSwagger } from "../modules/user/user.swagger.js";
 import { walletSwagger } from "../modules/wallet/wallet.swagger.js";
 
@@ -66,6 +68,7 @@ This API supports a dual-authentication mechanism designed to maximize flexibili
     ...authSwagger.paths,
     ...userSwagger.paths,
     ...categorySwagger.paths,
+    ...teacherSwagger.paths,
     ...courseSwagger.paths,
     ...walletSwagger.paths,
     ...enrollmentSwagger.paths,
@@ -78,5 +81,6 @@ This API supports a dual-authentication mechanism designed to maximize flexibili
     ...orderSwagger.paths,
     ...discountSwagger.paths,
     ...overviewSwagger.paths,
+    ...uploadSwagger.paths,
   },
 };
