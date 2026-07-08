@@ -5,15 +5,20 @@ import { authorize } from "../../middlewares/authorization.js";
 import { validate } from "../../middlewares/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
+  banUserController,
   deleteAvatarController,
+  getBannedUsersController,
   getProfileController,
   getProfileOverviewController,
   getUserByIdController,
   getUsersController,
+  unbanUserController,
   updateProfileController,
 } from "./user.controller.js";
 import {
+  banUserSchema,
   getUserByIdSchema,
+  listBannedUsersSchema,
   listUsersSchema,
   updateProfileSchema,
 } from "./user.validator.js";
@@ -42,10 +47,31 @@ router.get(
 );
 
 router.get(
+  "/blacklist",
+  authorize("ADMIN"),
+  validate(listBannedUsersSchema),
+  asyncHandler(getBannedUsersController),
+);
+
+router.get(
   "/:id",
   authorize("ADMIN"),
   validate(getUserByIdSchema),
   asyncHandler(getUserByIdController),
+);
+
+router.post(
+  "/:id/ban",
+  authorize("ADMIN"),
+  validate(banUserSchema),
+  asyncHandler(banUserController),
+);
+
+router.delete(
+  "/:id/ban",
+  authorize("ADMIN"),
+  validate(banUserSchema),
+  asyncHandler(unbanUserController),
 );
 
 export default router;

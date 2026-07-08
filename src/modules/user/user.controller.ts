@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
+import { AppError } from "../../utils/AppError.js";
 import { userService } from "./user.service.js";
-import { ListUsersQuery } from "./user.validator.js";
+import { ListBannedUsersQuery, ListUsersQuery } from "./user.validator.js";
 
 export const getProfileController: RequestHandler = async (req, res) => {
   const userId = req.user!.id;
@@ -14,28 +15,30 @@ export const getProfileController: RequestHandler = async (req, res) => {
   });
 };
 
-export const updateProfileController: RequestHandler = async (req, res) => {
+export const updateProfileController: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
   const userId = req.user!.id;
-  const { name, phone } = req.body;
-
-  let avatarPath: string | undefined;
-  if (req.file) {
-    avatarPath = req.file.path;
-  }
-
-  if (!name && !phone && !avatarPath) {
-    return res.status(400).json({
-      status: "fail",
-      data: {
-        message: "حداقل یک فیلد برای ویرایش ارسال کنید",
-      },
-    });
-  }
 
   const updateData: { name?: string; phone?: string; avatar?: string } = {};
-  if (name) updateData.name = name;
-  if (phone) updateData.phone = phone;
-  if (avatarPath) updateData.avatar = avatarPath;
+
+  if (req.body.name !== undefined) {
+    updateData.name = req.body.name;
+  }
+
+  if (req.body.phone !== undefined) {
+    updateData.phone = req.body.phone;
+  }
+
+  if (req.file?.path) {
+    updateData.avatar = req.file.path;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return next(new AppError("حداقل یک فیلد برای ویرایش ارسال کنید", 400));
+  }
 
   const updatedProfile = await userService.updateProfile(userId, updateData);
 
@@ -89,5 +92,43 @@ export const getUserByIdController: RequestHandler = async (req, res) => {
   return res.status(200).json({
     status: "success",
     data: { user },
+  });
+};
+
+export const getBannedUsersController: RequestHandler = async (req, res) => {
+  const result = await userService.getBannedUsers(
+    req.query as ListBannedUsersQuery,
+  );
+
+  return res.status(200).json({
+    status: "success",
+    data: result,
+  });
+};
+
+export const banUserController: RequestHandler = async (req, res) => {
+  const id = req.params.id as string;
+  const currentUserId = req.user!.id;
+
+  await userService.banUser(id, currentUserId);
+
+  return res.status(200).json({
+    status: "success",
+    data: {
+      message: "کاربر با موفقیت مسدود شد",
+    },
+  });
+};
+
+export const unbanUserController: RequestHandler = async (req, res) => {
+  const id = req.params.id as string;
+
+  await userService.unbanUser(id);
+
+  return res.status(200).json({
+    status: "success",
+    data: {
+      message: "کاربر با موفقیت رفع مسدودیت شد",
+    },
   });
 };

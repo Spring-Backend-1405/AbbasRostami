@@ -6,7 +6,11 @@ import {
   buildPaginationMeta,
   parsePagination,
 } from "../../utils/pagination.js";
-import { ListUsersQuery, UpdateProfileInput } from "./user.validator.js";
+import {
+  ListBannedUsersQuery,
+  ListUsersQuery,
+  UpdateProfileInput,
+} from "./user.validator.js";
 
 export const userService = {
   async getProfile(userId: string) {
@@ -41,10 +45,9 @@ export const userService = {
       });
 
       if (currentUser?.avatar) {
-        removeCloudinaryImage(currentUser.avatar);
+        await removeCloudinaryImage(currentUser.avatar);
       }
     }
-
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data,
@@ -68,7 +71,7 @@ export const userService = {
     });
 
     if (user?.avatar) {
-      removeCloudinaryImage(user.avatar);
+      await removeCloudinaryImage(user.avatar);
     }
 
     return prisma.user.update({
@@ -137,6 +140,10 @@ export const userService = {
         { name: { contains: query.search, mode: "insensitive" } },
         { email: { contains: query.search, mode: "insensitive" } },
       ];
+    }
+
+    if (query.isBanned !== undefined) {
+      where.isBanned = query.isBanned === "true";
     }
 
     const sortBy = query.sortBy || "createdAt";
@@ -231,5 +238,95 @@ export const userService = {
         reactions: _count.reactions,
       },
     };
+  },
+
+  async getBannedUsers(query: ListBannedUsersQuery) {
+    const { skip, take, page, limit } = parsePagination(query);
+
+    const [items, total] = await Promise.all([
+      prisma.user.findMany({
+        where: { isBanned: true },
+        skip,
+        take,
+        orderBy: { bannedAt: "desc" },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatar: true,
+          isBanned: true,
+          bannedAt: true,
+          createdAt: true,
+        },
+      }),
+      prisma.user.count({ where: { isBanned: true } }),
+    ]);
+
+    return {
+      items,
+      pagination: buildPaginationMeta(total, page, limit),
+    };
+  },
+
+  async banUser(id: string, currentUserId: string) {
+    if (id === currentUserId) {
+      throw new AppError("نمی‌توانید خودتان را مسدود کنید", 400);
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new AppError("کاربر یافت نشد", 404);
+    }
+
+    if (user.role === "ADMIN") {
+      throw new AppError("امکان مسدود کردن ادمین وجود ندارد", 409);
+    }
+
+    if (user.isBanned) {
+      throw new AppError("کاربر قبلاً مسدود شده است", 422);
+    }
+
+    return prisma.user.update({
+      where: { id },
+      data: {
+        isBanned: true,
+        bannedAt: new Date(),
+        refreshToken: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isBanned: true,
+        bannedAt: true,
+      },
+    });
+  },
+
+  async unbanUser(id: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new AppError("کاربر یافت نشد", 404);
+    }
+
+    if (!user.isBanned) {
+      throw new AppError("کاربر مسدود نیست", 400);
+    }
+
+    return prisma.user.update({
+      where: { id },
+      data: {
+        isBanned: false,
+        bannedAt: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isBanned: true,
+      },
+    });
   },
 };

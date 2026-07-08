@@ -33,6 +33,7 @@ export const userSwagger = {
         },
       },
     },
+
     "/api/users/profile": {
       get: {
         tags: ["User"],
@@ -71,7 +72,7 @@ export const userSwagger = {
         tags: ["User"],
         summary: "Update profile & upload avatar",
         description:
-          "CRITICAL: Must be submitted as **multipart/form-data**. Fields are optional. Files must be valid image formats up to 2MB.",
+          "Must be submitted as **multipart/form-data**. All fields are optional.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         requestBody: {
           content: {
@@ -81,18 +82,15 @@ export const userSwagger = {
                 properties: {
                   name: {
                     type: "string",
-                    description: "نام جدید کاربر (حداقل ۲ کاراکتر)",
                     example: "عباس رستمی ویرایش شده",
                   },
                   phone: {
                     type: "string",
-                    description: "شماره تلفن همراه ایران (شروع با 09)",
                     example: "09121112233",
                   },
                   avatar: {
                     type: "string",
                     format: "binary",
-                    description: "فایل تصویر آواتار (JPG, PNG, WEBP)",
                   },
                 },
               },
@@ -123,23 +121,30 @@ export const userSwagger = {
             },
           },
           400: {
-            description: "Validation error.",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: {
-                    phone: "شماره موبایل وارد شده معتبر نیست",
-                    name: "نام باید حداقل ۲ کاراکتر باشد",
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- name:
+  - Optional.
+  - Must be a string.
+  - Min length: 2.
+
+- phone:
+  - Optional.
+  - Must be a valid Iranian mobile number.
+  - Must start with 09 and contain 11 digits.
+
+- avatar:
+  - Optional.
+  - Max size: 2 MB.
+  - Allowed formats: .jpg, .jpeg, .png, .webp.
+
+- At least one field must be provided for update.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
         },
       },
     },
+
     "/api/users/profile/avatar": {
       delete: {
         tags: ["User"],
@@ -163,6 +168,7 @@ export const userSwagger = {
         },
       },
     },
+
     "/api/users": {
       get: {
         tags: ["User"],
@@ -184,20 +190,18 @@ export const userSwagger = {
           {
             name: "search",
             in: "query",
-            schema: { type: "string", example: "عباس" },
+            schema: { type: "string" },
             description: "Search by email and name",
           },
           {
             name: "role",
             in: "query",
             schema: { type: "string", enum: ["USER", "ADMIN"] },
-            description: "Filter by Role",
           },
           {
             name: "isVerified",
             in: "query",
             schema: { type: "string", enum: ["true", "false"] },
-            description: "Filter by isVerified EMAIL",
           },
           {
             name: "sortBy",
@@ -207,7 +211,6 @@ export const userSwagger = {
               enum: ["createdAt", "name", "email"],
               default: "createdAt",
             },
-            description: "Sort by",
           },
           {
             name: "order",
@@ -217,7 +220,6 @@ export const userSwagger = {
               enum: ["asc", "desc"],
               default: "desc",
             },
-            description: "Sort by order",
           },
         ],
         responses: {
@@ -250,20 +252,114 @@ export const userSwagger = {
                       total: 25,
                       page: 1,
                       limit: 10,
-                      totalPages: 3,
-                      hasNextPage: true,
-                      hasPrevPage: false,
                     },
                   },
                 },
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.
+
+- search:
+  - Optional.
+  - Must be a string.
+  - Max length: 100.
+
+- role:
+  - Optional.
+  - Must be one of: USER, ADMIN.
+
+- isVerified:
+  - Optional.
+  - Must be one of: true, false.
+
+- sortBy:
+  - Optional.
+  - Must be one of: createdAt, name, email.
+
+- order:
+  - Optional.
+  - Must be one of: asc, desc.`,
+          },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
         },
       },
     },
+
+    "/api/users/blacklist": {
+      get: {
+        tags: ["User"],
+        summary: "Get banned users list (Admin)",
+        description: "Returns paginated list of all banned users.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "string", example: "1" },
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "string", example: "10" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "List of banned users.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    items: [
+                      {
+                        id: "user-uuid",
+                        email: "banned@example.com",
+                        name: "کاربر مسدود",
+                        avatar: null,
+                        isBanned: true,
+                        bannedAt: "2026-07-04T20:00:00.000Z",
+                        createdAt: "2026-06-01T10:00:00.000Z",
+                      },
+                    ],
+                    pagination: {
+                      total: 3,
+                      page: 1,
+                      limit: 10,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.`,
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          403: { description: "Forbidden: Admin access required." },
+        },
+      },
+    },
+
     "/api/users/{id}": {
       get: {
         tags: ["User"],
@@ -312,6 +408,98 @@ export const userSwagger = {
                 },
               },
             },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.`,
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          403: { description: "Forbidden: Admin access required." },
+          404: { description: "User not found." },
+        },
+      },
+    },
+
+    "/api/users/{id}/ban": {
+      post: {
+        tags: ["User"],
+        summary: "Ban a user (Admin)",
+        description:
+          "Bans a user and invalidates all their active sessions. Admins cannot be banned.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "User banned successfully.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    message: "کاربر با موفقیت مسدود شد",
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.
+
+- You cannot ban yourself.`,
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          403: { description: "Forbidden: Admin access required." },
+          404: { description: "User not found." },
+          409: { description: "Cannot ban an admin user." },
+          422: { description: "User is already banned." },
+        },
+      },
+      delete: {
+        tags: ["User"],
+        summary: "Unban a user (Admin)",
+        description: "Removes ban from a user account.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "User unbanned successfully.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    message: "کاربر با موفقیت رفع مسدودیت شد",
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.
+
+- User must already be banned before unbanning.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },

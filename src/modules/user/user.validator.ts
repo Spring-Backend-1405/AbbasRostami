@@ -17,6 +17,7 @@ export const listUsersSchema = z.object({
     search: z.string().max(100).optional(),
     role: z.enum(["USER", "ADMIN"]).optional(),
     isVerified: z.enum(["true", "false"]).optional(),
+    isBanned: z.enum(["true", "false"]).optional(),
     sortBy: z.enum(["createdAt", "name", "email"]).optional(),
     order: z.enum(["asc", "desc"]).optional(),
   }),
@@ -27,6 +28,23 @@ export const getUserByIdSchema = z.object({
     id: z.string().uuid("شناسه کاربر نامعتبر است"),
   }),
 });
+
+export const banUserSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("شناسه کاربر نامعتبر است"),
+  }),
+});
+
+export const listBannedUsersSchema = z.object({
+  query: z.object({
+    page: z.string().regex(/^\d+$/).optional(),
+    limit: z.string().regex(/^\d+$/).optional(),
+  }),
+});
+
+export type ListBannedUsersQuery = z.infer<
+  typeof listBannedUsersSchema
+>["query"];
 
 export type ListUsersQuery = z.infer<typeof listUsersSchema>["query"];
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>["body"];
