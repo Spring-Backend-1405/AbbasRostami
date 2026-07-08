@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
-import fs from "fs";
 import { ZodError, ZodSchema } from "zod";
 import { AppError } from "../utils/AppError.js";
+import { removeCloudinaryImage } from "../utils/cloudinary.js";
 
 export const validate = (schema: ZodSchema) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const parsed = (await schema.parseAsync({
         body: req.body,
@@ -16,17 +16,22 @@ export const validate = (schema: ZodSchema) => {
         params?: unknown;
       };
 
-      if (parsed.body !== undefined) req.body = parsed.body;
+      if (parsed.body !== undefined) {
+        req.body = parsed.body;
+      }
+
+      if (parsed.query !== undefined) {
+        Object.assign(req.query, parsed.query);
+      }
+
       if (parsed.params !== undefined) {
         Object.assign(req.params, parsed.params);
       }
 
       return next();
     } catch (error) {
-      if (req.file) {
-        fs.unlink(req.file.path, (err) => {
-          if (err) console.error("❌ خطا در حذف فایل هرز:", err);
-        });
+      if (req.file?.path) {
+        await removeCloudinaryImage(req.file.path);
       }
 
       if (error instanceof ZodError) {

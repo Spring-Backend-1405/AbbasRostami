@@ -127,3 +127,17 @@ export const changeEmailLimiter = rateLimit({
     "تعداد درخواست‌های تغییر ایمیل بیش از حد. ۱ ساعت دیگر تلاش کنید.",
   ),
 });
+
+export const resendChangeEmailCodeLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 3,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const ip = getIp(req);
+    return `resend-change-email:${ip}`;
+  },
+  message: jsonMessage(
+    "تعداد درخواست‌ها بیش از حد. لطفاً ۵ دقیقه دیگر تلاش کنید.",
+  ),
+});

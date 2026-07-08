@@ -1,4 +1,7 @@
+import fs from "fs";
 import winston from "winston";
+
+fs.mkdirSync("logs", { recursive: true });
 
 const sendToTelegram = async (message: string) => {
   const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -7,16 +10,24 @@ const sendToTelegram = async (message: string) => {
   if (!TOKEN || !CHAT_ID) return;
 
   try {
-    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: message,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-    });
+    const res = await fetch(
+      `https://api.telegram.org/bot${TOKEN}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: message,
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("❌ Telegram API failed:", errorText);
+    }
   } catch (err) {
     console.error("❌ Telegram send failed:", err);
   }
@@ -126,9 +137,7 @@ export const sendErrorToTelegram = async (params: {
   userAgent?: string;
 }) => {
   const time = formatTime();
-
   const ua = parseUserAgent(params.userAgent);
-
   const methodEmoji = METHOD_ICONS[params.method] || "⚪";
 
   const stackTrace = params.stack

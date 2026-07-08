@@ -21,7 +21,7 @@ function tryVerifyToken(token?: string | null): TokenPayload | null {
 
 export const authentication = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ) => {
   const bearerToken = getBearerToken(req.headers.authorization);
@@ -35,11 +35,20 @@ export const authentication = async (
   try {
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
-      select: { id: true, email: true, role: true },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isBanned: true,
+      },
     });
 
     if (!user) {
       return next(new AppError("کاربر یافت نشد", 401));
+    }
+
+    if (user.isBanned) {
+      return next(new AppError("حساب کاربری شما مسدود شده است", 403));
     }
 
     req.user = {
