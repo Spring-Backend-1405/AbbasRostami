@@ -20,6 +20,8 @@ import orderRoutes from "./modules/order/order.routes.js";
 import overviewRoutes from "./modules/overview/overview.routes.js";
 import postRoutes from "./modules/post/post.routes.js";
 import searchRoutes from "./modules/search/search.routes.js";
+import teacherRoutes from "./modules/teacher/teacher.routes.js";
+import uploadRoutes from "./modules/upload/upload.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
 import walletRoutes from "./modules/wallet/wallet.routes.js";
 
@@ -123,6 +125,8 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/discounts", discountRoutes);
 app.use("/api/overview", overviewRoutes);
+app.use("/api/uploads", uploadRoutes);
+app.use("/api/teachers", teacherRoutes);
 
 if (process.env.ENABLE_TEST_ROUTES === "true") {
   app.get("/test-500", (_req, _res, next) => {
