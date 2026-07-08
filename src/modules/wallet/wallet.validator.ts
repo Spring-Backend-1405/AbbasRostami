@@ -13,15 +13,6 @@ export const chargeWalletSchema = z.object({
   }),
 });
 
-export const verifyPaymentSchema = z.object({
-  query: z.object({
-    Authority: z
-      .string({ error: "Authority الزامی است" })
-      .min(1, "Authority نامعتبر است"),
-    Status: z.enum(["OK", "NOK"], { error: "Status نامعتبر است" }),
-  }),
-});
-
 export const listUserTransactionsSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/, "page باید عدد باشد").optional(),
@@ -60,7 +51,6 @@ export const listAdminTransactionsSchema = z.object({
 });
 
 export type ChargeWalletInput = z.infer<typeof chargeWalletSchema>["body"];
-export type VerifyPaymentQuery = z.infer<typeof verifyPaymentSchema>["query"];
 export type ListUserTransactionsQuery = z.infer<
   typeof listUserTransactionsSchema
 >["query"];

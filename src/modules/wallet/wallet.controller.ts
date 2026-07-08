@@ -36,14 +36,18 @@ export const chargeWalletController: RequestHandler = async (req, res) => {
 };
 
 export const verifyPaymentController: RequestHandler = async (req, res) => {
-  const { Authority, Status } = req.query;
+  const Authority = req.query.Authority as string;
+  const Status = req.query.Status as string;
 
-  try {
-    const result = await walletService.verifyPayment(
-      Authority as string,
-      Status as string,
+  if (!Authority || !Status) {
+    return res.redirect(
+      `${FRONTEND_URL}/payment/failed?reason=invalid_callback`,
     );
+  }
 
+  const result = await walletService.verifyPayment(Authority, Status);
+
+  if (result.success && result.transaction) {
     const params = new URLSearchParams({
       status: "success",
       refId: result.refId || "",
@@ -53,19 +57,16 @@ export const verifyPaymentController: RequestHandler = async (req, res) => {
     });
 
     return res.redirect(`${FRONTEND_URL}/payment/success?${params.toString()}`);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "خطا در پرداخت";
-
-    const params = new URLSearchParams({
-      status: "failed",
-      reason: message,
-      authority: (Authority as string) || "",
-    });
-
-    return res.redirect(`${FRONTEND_URL}/payment/failed?${params.toString()}`);
   }
-};
 
+  const params = new URLSearchParams({
+    status: "failed",
+    reason: result.reason || "خطا در پرداخت",
+    authority: Authority || "",
+  });
+
+  return res.redirect(`${FRONTEND_URL}/payment/failed?${params.toString()}`);
+};
 export const getUserTransactionsController: RequestHandler = async (
   req,
   res,

@@ -46,17 +46,11 @@ const transactionWithUser = {
 
 export const walletService = {
   async getOrCreateWallet(userId: string) {
-    let wallet = await prisma.wallet.findUnique({
+    return prisma.wallet.upsert({
       where: { userId },
+      create: { userId, balance: 0 },
+      update: {},
     });
-
-    if (!wallet) {
-      wallet = await prisma.wallet.create({
-        data: { userId, balance: 0 },
-      });
-    }
-
-    return wallet;
   },
 
   async getWalletBalance(userId: string) {
@@ -65,6 +59,11 @@ export const walletService = {
   },
 
   async chargeWallet(userId: string, data: ChargeWalletInput) {
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+      throw new AppError("BACKEND_URL در محیط تعریف نشده است", 500);
+    }
+
     const [_, user] = await Promise.all([
       this.getOrCreateWallet(userId),
       prisma.user.findUnique({
@@ -80,7 +79,7 @@ export const walletService = {
     const zarinpalResult = await requestPayment({
       amount: data.amount,
       description: `شارژ کیف پول به مبلغ ${data.amount} ریال`,
-      callbackUrl: `${process.env.BACKEND_URL!}/api/wallet/verify`,
+      callbackUrl: `${backendUrl}/api/wallet/verify`,
       email: user.email,
       mobile: user.phone || undefined,
     });
@@ -116,14 +115,26 @@ export const walletService = {
     });
 
     if (!transaction) {
-      throw new AppError("تراکنش یافت نشد", 404);
+      return {
+        success: false,
+        reason: "تراکنش یافت نشد",
+        transaction: null,
+        newBalance: null,
+        refId: null,
+      };
     }
 
     if (transaction.status !== "PENDING") {
-      throw new AppError(
-        `این تراکنش قبلاً پردازش شده است (وضعیت: ${transaction.status})`,
-        400,
-      );
+      return {
+        success: transaction.status === "SUCCESS",
+        reason:
+          transaction.status !== "SUCCESS"
+            ? "تراکنش قبلاً پردازش شده است"
+            : undefined,
+        transaction,
+        newBalance: null,
+        refId: null,
+      };
     }
 
     if (status === "NOK") {
@@ -132,7 +143,13 @@ export const walletService = {
         data: { status: "CANCELLED" },
       });
 
-      throw new AppError("پرداخت توسط کاربر لغو شد", 400);
+      return {
+        success: false,
+        reason: "پرداخت توسط کاربر لغو شد",
+        transaction,
+        newBalance: null,
+        refId: null,
+      };
     }
 
     const verifyResult = await zarinpalVerify({
@@ -146,7 +163,13 @@ export const walletService = {
         data: { status: "FAILED" },
       });
 
-      throw new AppError(verifyResult.error || "پرداخت ناموفق بود", 400);
+      return {
+        success: false,
+        reason: verifyResult.error || "پرداخت ناموفق بود",
+        transaction,
+        newBalance: null,
+        refId: null,
+      };
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -167,9 +190,11 @@ export const walletService = {
     });
 
     return {
+      success: true,
       transaction: result.transaction,
       newBalance: result.wallet.balance,
       refId: verifyResult.refId,
+      reason: undefined,
     };
   },
 

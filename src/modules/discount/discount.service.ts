@@ -141,10 +141,18 @@ export const discountService = {
   async applyDiscountToCart(userId: string, data: ApplyDiscountInput) {
     const discount = await validateDiscount(data.code);
 
-    await prisma.cart.upsert({
+    const cart = await prisma.cart.findUnique({
       where: { userId },
-      create: { userId, discountCode: discount.code },
-      update: { discountCode: discount.code },
+      include: { items: true },
+    });
+
+    if (!cart || cart.items.length === 0) {
+      throw new AppError("سبد خرید شما خالی است", 400);
+    }
+
+    await prisma.cart.update({
+      where: { userId },
+      data: { discountCode: discount.code },
     });
 
     return {

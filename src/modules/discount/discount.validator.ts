@@ -14,18 +14,18 @@ export const createDiscountSchema = z
         error: "نوع تخفیف باید PERCENTAGE یا AMOUNT باشد",
       }),
 
-      value: z
+      value: z.coerce
         .number({ error: "مقدار الزامی است" })
         .int("مقدار باید عدد صحیح باشد")
         .positive("مقدار باید مثبت باشد"),
 
-      maxUses: z
+      maxUses: z.coerce
         .number({ error: "حداکثر تعداد استفاده الزامی است" })
         .int()
         .min(1, "حداقل ۱")
         .max(10000, "حداکثر ۱۰۰۰۰"),
 
-      expiresInDays: z
+      expiresInDays: z.coerce
         .number({ error: "تعداد روز انقضا الزامی است" })
         .int()
         .min(1, "حداقل ۱ روز")

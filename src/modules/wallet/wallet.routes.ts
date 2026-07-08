@@ -16,7 +16,6 @@ import {
   listAdminTransactionsSchema,
   listUserTransactionsSchema,
   listWalletsAdminSchema,
-  verifyPaymentSchema,
 } from "./wallet.validator.js";
 
 const router = Router();
@@ -46,11 +45,7 @@ router.post(
   asyncHandler(chargeWalletController),
 );
 
-router.get(
-  "/verify",
-  validate(verifyPaymentSchema),
-  asyncHandler(verifyPaymentController),
-);
+router.get("/verify", asyncHandler(verifyPaymentController));
 
 router.get(
   "/transactions",

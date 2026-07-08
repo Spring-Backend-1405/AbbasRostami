@@ -106,7 +106,7 @@ const createOrderFromCart = async (
   for (const item of cart.items) {
     const course = item.course;
 
-    if (!course.published) {
+    if (!course.published || !course.category?.show) {
       throw new AppError(`دوره "${course.title}" دیگر در دسترس نیست`, 400);
     }
 
@@ -252,11 +252,8 @@ export const orderService = {
 
   async checkoutWithZarinpal(userId: string) {
     const order = await prisma.$transaction(async (tx) => {
-      const newOrder = await createOrderFromCart(userId, tx);
-
-      await clearCartItems(userId, tx);
-
-      return newOrder;
+      return createOrderFromCart(userId, tx);
+      // ← cart clear نمی‌کنیم
     });
 
     const user = await prisma.user.findUnique({
@@ -264,10 +261,15 @@ export const orderService = {
       select: { email: true, phone: true },
     });
 
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+      throw new AppError("BACKEND_URL در محیط تعریف نشده است", 500);
+    }
+
     const zarinpalResult = await requestPayment({
       amount: order.totalAmount,
       description: `پرداخت سفارش #${order.id.slice(0, 8)}`,
-      callbackUrl: `${process.env.BACKEND_URL!}/api/orders/verify`,
+      callbackUrl: `${backendUrl}/api/orders/verify`,
       email: user?.email,
       mobile: user?.phone || undefined,
       orderId: order.id,
@@ -379,6 +381,7 @@ export const orderService = {
       });
 
       await createEnrollments(transaction.userId, order.items, tx);
+      await clearCartItems(transaction.userId, tx);
 
       return {
         order,

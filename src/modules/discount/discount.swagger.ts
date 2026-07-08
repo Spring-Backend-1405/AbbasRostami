@@ -196,7 +196,6 @@ export const discountSwagger = {
                       status: "success",
                       data: {
                         message: "کد تخفیف فعال شد",
-                        discount: discountExample,
                       },
                     },
                   },
@@ -206,7 +205,6 @@ export const discountSwagger = {
                       status: "success",
                       data: {
                         message: "کد تخفیف غیرفعال شد",
-                        discount: { ...discountExample, active: false },
                       },
                     },
                   },
