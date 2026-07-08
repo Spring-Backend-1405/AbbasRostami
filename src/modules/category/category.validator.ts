@@ -20,19 +20,23 @@ export const updateCategorySchema = z.object({
   params: z.object({
     id: z.string().uuid("شناسه نامعتبر است"),
   }),
-  body: z.object({
-    name: z
-      .string()
-      .min(2, "نام دسته باید حداقل ۲ کاراکتر باشد")
-      .max(50, "نام دسته نباید بیشتر از ۵۰ کاراکتر باشد")
-      .trim()
-      .optional(),
-    description: z
-      .string()
-      .max(500, "توضیحات نباید بیشتر از ۵۰۰ کاراکتر باشد")
-      .trim()
-      .optional(),
-  }),
+  body: z
+    .object({
+      name: z
+        .string()
+        .min(2, "نام دسته باید حداقل ۲ کاراکتر باشد")
+        .max(50, "نام دسته نباید بیشتر از ۵۰ کاراکتر باشد")
+        .trim()
+        .optional(),
+      description: z
+        .string()
+        .max(500, "توضیحات نباید بیشتر از ۵۰۰ کاراکتر باشد")
+        .trim()
+        .optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "حداقل یک فیلد برای ویرایش الزامی است",
+    }),
 });
 
 export const deleteCategorySchema = z.object({

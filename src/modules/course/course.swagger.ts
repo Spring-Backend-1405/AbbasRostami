@@ -105,6 +105,13 @@ export const courseSwagger = {
                           name: "فرانت‌اند",
                           slug: "فرانت-اند",
                         },
+                        teacher: {
+                          id: "teacher-uuid",
+                          name: "عباس رستمی",
+                          slug: "abbas-rostami",
+                          avatar:
+                            "https://res.cloudinary.com/.../teachers/avatar.jpg",
+                        },
                         stats: {
                           enrollments: 25,
                           comments: 12,
@@ -150,7 +157,7 @@ export const courseSwagger = {
             "multipart/form-data": {
               schema: {
                 type: "object",
-                required: ["title", "price"],
+                required: ["title", "price", "teacherId", "categoryId"],
                 properties: {
                   title: {
                     type: "string",
@@ -181,10 +188,15 @@ export const courseSwagger = {
                     format: "uuid",
                     example: "d3b07384-d113-4956-a5cc-484443028456",
                   },
+                  teacherId: {
+                    type: "string",
+                    format: "uuid",
+                    example: "59b31b70-bc67-4651-a4ac-7df76528b9b2",
+                  },
                   published: {
                     type: "boolean",
                     default: false,
-                    example: true,
+                    example: false,
                   },
                   image: {
                     type: "string",
@@ -210,11 +222,19 @@ export const courseSwagger = {
                       slug: "آموزش-react-پیشرفته",
                       description: "یادگیری کامل React",
                       price: 5000000,
-                      imageUrl: "/uploads/courses/course-uuid.jpg",
+                      imageUrl:
+                        "https://res.cloudinary.com/.../courses/course.jpg",
                       level: "INTERMEDIATE",
-                      published: true,
+                      published: false,
                       createdAt: "2026-01-15T14:00:00.000Z",
                       updatedAt: "2026-01-15T14:00:00.000Z",
+                      teacher: {
+                        id: "59b31b70-bc67-4651-a4ac-7df76528b9b2",
+                        name: "عباس رستمی",
+                        slug: "abbas-rostami",
+                        avatar:
+                          "https://res.cloudinary.com/.../teachers/avatar.jpg",
+                      },
                       category: {
                         id: "cat-uuid",
                         name: "فرانت‌اند",
@@ -231,37 +251,52 @@ export const courseSwagger = {
             },
           },
           400: {
-            description: `Invalid request - Validation rules:\n
+            description: `Invalid request - Validation rules:
+
 - title:
   - Must not be empty.
   - Must be a string.
   - Min length: 3.
-  - Max length: 150.\n
+  - Max length: 150.
+
 - description:
   - Optional.
   - Must be a string.
-  - Max length: 5000.\n
+  - Max length: 5000.
+
 - price:
+  - Must not be empty.
   - Must be a number.
   - Must be an integer.
   - Minimum: 0.
-  - Maximum: 1000000000.\n
+  - Maximum: 1000000000.
+
+- teacherId:
+  - Must not be empty.
+  - Must be a valid UUID v4.
+  - Teacher must exist in the system.
+
 - level:
   - Optional.
   - Must be one of: BEGINNER, INTERMEDIATE, ADVANCED.
-  - Default: BEGINNER.\n
+  - Default: BEGINNER.
+
 - categoryId:
-  - Optional.
-  - Must be a valid UUID v4.\n
+  - Must not be empty.
+  - Must be a valid UUID v4.
+  - Category must exist in the system.
+
 - published:
   - Optional.
   - Must be a boolean.
-  - Default: false.\n
+  - Default: false.
+
 - image:
   - Optional.
   - Max size: 5 MB.
-  - Allowed formats: .jpg, .jpeg, .png, .webp.\n
-- Duplicate title or invalid category may also return 400.`,
+  - Allowed formats: .jpg, .jpeg, .png, .webp.
+
+- Duplicate title, invalid category or invalid teacher may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
@@ -356,6 +391,13 @@ export const courseSwagger = {
                         published: false,
                         createdAt: "2026-01-15T14:00:00.000Z",
                         updatedAt: "2026-01-15T14:00:00.000Z",
+                        teacher: {
+                          id: "teacher-uuid",
+                          name: "عباس رستمی",
+                          slug: "abbas-rostami",
+                          avatar:
+                            "https://res.cloudinary.com/.../teachers/avatar.jpg",
+                        },
                         category: {
                           id: "cat-uuid",
                           name: "فرانت‌اند",
@@ -384,7 +426,7 @@ export const courseSwagger = {
         tags: ["Course"],
         summary: "Get course by slug",
         description:
-          "Returns a single published course with category info and count of enrollments/comments/reactions. Only returns courses where category is active (show=true) or category is null.",
+          "Returns a single published course. Only returns courses where category is active (show=true).",
         parameters: [
           {
             name: "slug",
@@ -413,6 +455,13 @@ export const courseSwagger = {
                       published: true,
                       createdAt: "2026-01-15T14:00:00.000Z",
                       updatedAt: "2026-01-15T14:00:00.000Z",
+                      teacher: {
+                        id: "teacher-uuid",
+                        name: "عباس رستمی",
+                        slug: "abbas-rostami",
+                        avatar:
+                          "https://res.cloudinary.com/.../teachers/avatar.jpg",
+                      },
                       category: {
                         id: "cat-uuid",
                         name: "فرانت‌اند",
@@ -443,7 +492,7 @@ export const courseSwagger = {
         tags: ["Course"],
         summary: "Update course (Admin)",
         description:
-          "CRITICAL: Must be submitted as **multipart/form-data**. All fields optional. If title changes, slug is auto-regenerated. If new image is uploaded, old image is deleted. To remove category, send categoryId=null.",
+          "Must be submitted as **multipart/form-data**. All fields optional. If title changes, slug is auto-regenerated. If new image is uploaded, old image is deleted. To remove category or teacher, send null.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         parameters: [
           {
@@ -464,12 +513,10 @@ export const courseSwagger = {
                     type: "string",
                     minLength: 3,
                     maxLength: 150,
-                    example: "آموزش React پیشرفته (نسخه ۲)",
                   },
                   description: {
                     type: "string",
                     maxLength: 5000,
-                    example: "توضیحات بروزرسانی شده",
                   },
                   price: {
                     type: "number",
@@ -484,8 +531,14 @@ export const courseSwagger = {
                   categoryId: {
                     type: "string",
                     format: "uuid",
-                    nullable: true,
-                    description: "شناسه دسته جدید. برای حذف دسته، null بفرستید",
+                  },
+                  teacherId: {
+                    type: "string",
+                    format: "uuid",
+                  },
+                  published: {
+                    type: "boolean",
+                    example: true,
                   },
                   image: {
                     type: "string",
@@ -508,14 +561,22 @@ export const courseSwagger = {
                     course: {
                       id: "d3b07384-d113-4956-a5cc-484443028456",
                       title: "آموزش React پیشرفته (نسخه ۲)",
-                      slug: "آموزش-react-پیشرفته-نسخه-۲",
+                      slug: "آموزش-react-پیشرفته-نسخه-2",
                       description: "توضیحات بروزرسانی شده",
                       price: 6000000,
-                      imageUrl: "/uploads/courses/course-new-uuid.jpg",
+                      imageUrl:
+                        "https://res.cloudinary.com/.../courses/course-new.jpg",
                       level: "INTERMEDIATE",
                       published: true,
                       createdAt: "2026-01-15T14:00:00.000Z",
                       updatedAt: "2026-01-15T15:00:00.000Z",
+                      teacher: {
+                        id: "59b31b70-bc67-4651-a4ac-7df76528b9b2",
+                        name: "عباس رستمی",
+                        slug: "abbas-rostami",
+                        avatar:
+                          "https://res.cloudinary.com/.../teachers/avatar.jpg",
+                      },
                       category: {
                         id: "cat-uuid",
                         name: "فرانت‌اند",
@@ -532,36 +593,54 @@ export const courseSwagger = {
             },
           },
           400: {
-            description: `Invalid request - Validation rules:\n
+            description: `Invalid request - Validation rules:
+
 - id (path):
-  - Must be a valid UUID v4.\n
+  - Must be a valid UUID v4.
+
 - title:
   - Optional.
   - Must be a string.
   - Min length: 3.
-  - Max length: 150.\n
+  - Max length: 150.
+
 - description:
   - Optional.
   - Must be a string.
-  - Max length: 5000.\n
+  - Max length: 5000.
+
 - price:
   - Optional.
   - Must be a number.
   - Must be an integer.
   - Minimum: 0.
-  - Maximum: 1000000000.\n
+  - Maximum: 1000000000.
+
+- teacherId:
+  - Optional.
+  - Must be a valid UUID v4.
+  - Teacher must exist in the system.
+
 - level:
   - Optional.
-  - Must be one of: BEGINNER, INTERMEDIATE, ADVANCED.\n
+  - Must be one of: BEGINNER, INTERMEDIATE, ADVANCED.
+
 - categoryId:
   - Optional.
-  - Must be a valid UUID v4 or null.\n
+  - Must be a valid UUID v4 or null.
+  - Send null to remove category.
+
+- published:
+  - Optional.
+  - Must be a boolean.
+
 - image:
   - Optional.
   - Max size: 5 MB.
-  - Allowed formats: .jpg, .jpeg, .png, .webp.\n
-- Duplicate title or invalid category may also return 400.\n
-- At least one field is required.`,
+  - Allowed formats: .jpg, .jpeg, .png, .webp.
+
+- At least one field is required.
+- Duplicate title, invalid category or invalid teacher may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
@@ -656,6 +735,12 @@ export const courseSwagger = {
                           published: true,
                           createdAt: "2026-01-15T14:00:00.000Z",
                           updatedAt: "2026-01-15T15:00:00.000Z",
+                          teacher: {
+                            id: "teacher-uuid",
+                            name: "عباس رستمی",
+                            slug: "abbas-rostami",
+                            avatar: null,
+                          },
                           category: {
                             id: "cat-uuid",
                             name: "فرانت‌اند",

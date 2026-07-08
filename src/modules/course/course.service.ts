@@ -25,7 +25,7 @@ import {
 } from "./course.validator.js";
 
 const formatCourse = (course: CourseWithRelations) => {
-  const { _count, categoryId, ...rest } = course;
+  const { _count, categoryId, teacherId, ...rest } = course;
   return {
     ...rest,
     stats: {
@@ -62,12 +62,22 @@ const validateCategoryExists = async (categoryId: string) => {
   }
 };
 
+const validateTeacherExists = async (teacherId: string) => {
+  const teacher = await prisma.teacher.findUnique({
+    where: { id: teacherId },
+  });
+
+  if (!teacher) {
+    throw new AppError("مدرس مورد نظر یافت نشد", 400, {
+      teacherId: "این مدرس وجود ندارد",
+    });
+  }
+};
+
 export const courseService = {
   async createCourse(data: CreateCourseInputWithImage) {
-    if (data.categoryId) {
-      await validateCategoryExists(data.categoryId);
-    }
-
+    await validateCategoryExists(data.categoryId);
+    await validateTeacherExists(data.teacherId);
     try {
       const course = await prisma.course.create({
         data: {
@@ -78,6 +88,7 @@ export const courseService = {
           level: data.level,
           imageUrl: data.imageUrl,
           categoryId: data.categoryId,
+          teacherId: data.teacherId,
           published: data.published,
         },
         include: courseInclude,
@@ -86,7 +97,7 @@ export const courseService = {
       return formatCourse(course);
     } catch (error) {
       if (data.imageUrl) {
-        removeCloudinaryImage(data.imageUrl);
+        await removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -97,13 +108,16 @@ export const courseService = {
     const existing = await prisma.course.findUnique({ where: { id } });
     if (!existing) {
       if (data.imageUrl) {
-        removeCloudinaryImage(data.imageUrl);
+        await removeCloudinaryImage(data.imageUrl);
       }
       throw new AppError("دوره مورد نظر یافت نشد", 404);
     }
 
     if (data.categoryId) {
       await validateCategoryExists(data.categoryId);
+    }
+    if (data.teacherId) {
+      await validateTeacherExists(data.teacherId);
     }
 
     const updateData: Prisma.CourseUpdateInput = {};
@@ -125,15 +139,14 @@ export const courseService = {
       updateData.published = data.published;
     }
     if (data.categoryId !== undefined) {
-      updateData.category = data.categoryId
-        ? { connect: { id: data.categoryId } }
-        : { disconnect: true };
+      updateData.category = { connect: { id: data.categoryId } };
+    }
+
+    if (data.teacherId !== undefined) {
+      updateData.teacher = { connect: { id: data.teacherId } };
     }
 
     if (data.imageUrl) {
-      if (existing.imageUrl) {
-        removeCloudinaryImage(existing.imageUrl);
-      }
       updateData.imageUrl = data.imageUrl;
     }
 
@@ -144,10 +157,14 @@ export const courseService = {
         include: courseInclude,
       });
 
+      if (data.imageUrl && existing.imageUrl) {
+        await removeCloudinaryImage(existing.imageUrl);
+      }
+
       return formatCourse(course);
     } catch (error) {
       if (data.imageUrl) {
-        removeCloudinaryImage(data.imageUrl);
+        await removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -194,11 +211,11 @@ export const courseService = {
       throw new AppError("دوره مورد نظر یافت نشد", 404);
     }
 
-    if (existing.imageUrl) {
-      removeCloudinaryImage(existing.imageUrl);
-    }
-
     await prisma.course.delete({ where: { id } });
+
+    if (existing.imageUrl) {
+      await removeCloudinaryImage(existing.imageUrl);
+    }
   },
 
   async getPublicCourses(query: ListCoursesPublicQuery, userId?: string) {
@@ -206,7 +223,7 @@ export const courseService = {
 
     const where: Prisma.CourseWhereInput = {
       published: true,
-      OR: [{ categoryId: null }, { category: { show: true } }],
+      category: { show: true },
     };
 
     if (query.categories && query.categories.length > 0) {
@@ -345,7 +362,7 @@ export const courseService = {
       where: {
         slug,
         published: true,
-        OR: [{ categoryId: null }, { category: { show: true } }],
+        category: { show: true },
       },
       include: courseInclude,
     });

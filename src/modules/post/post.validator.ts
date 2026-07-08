@@ -1,5 +1,21 @@
 import { z } from "zod";
 
+const getPlainTextLength = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim().length;
+
+const richTextContent = z
+  .string({ message: "محتوا الزامی است" })
+  .min(1, "محتوا الزامی است")
+  .refine((val) => getPlainTextLength(val) >= 10, {
+    message: "محتوا باید حداقل ۱۰ کاراکتر متن واقعی داشته باشد",
+  })
+  .refine((val) => val.length <= 100000, {
+    message: "محتوا بیش از حد طولانی است",
+  });
+
 export const createPostSchema = z.object({
   body: z.object({
     title: z
@@ -7,18 +23,16 @@ export const createPostSchema = z.object({
       .min(3, "عنوان باید حداقل ۳ کاراکتر باشد")
       .max(200, "عنوان نمی‌تواند بیشتر از ۲۰۰ کاراکتر باشد")
       .trim(),
-    content: z
-      .string({ error: "محتوا الزامی است" })
-      .min(10, "محتوا باید حداقل ۱۰ کاراکتر باشد")
-      .trim(),
-    categoryId: z.string().uuid("شناسه دسته‌بندی نامعتبر است").optional(),
+    content: richTextContent,
+    categoryId: z
+      .string({ message: "شناسه دسته‌بندی الزامی است" })
+      .uuid("شناسه دسته‌بندی نامعتبر است"),
     published: z
       .union([z.boolean(), z.enum(["true", "false"])], {
         message: "مقدار published باید true یا false باشد",
       })
       .transform((val) => val === true || val === "true")
-      .optional()
-      .default(false),
+      .optional(),
   }),
 });
 
@@ -34,16 +48,8 @@ export const updatePostSchema = z.object({
         .max(200, "عنوان نمی‌تواند بیشتر از ۲۰۰ کاراکتر باشد")
         .trim()
         .optional(),
-      content: z
-        .string()
-        .min(10, "محتوا باید حداقل ۱۰ کاراکتر باشد")
-        .trim()
-        .optional(),
-      categoryId: z
-        .string()
-        .uuid("شناسه دسته‌بندی نامعتبر است")
-        .nullable()
-        .optional(),
+      content: richTextContent.optional(),
+      categoryId: z.string().uuid("شناسه دسته‌بندی نامعتبر است").optional(),
       published: z
         .union([z.boolean(), z.enum(["true", "false"])], {
           message: "مقدار published باید true یا false باشد",

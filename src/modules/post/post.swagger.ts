@@ -96,7 +96,7 @@ export const postSwagger = {
             "multipart/form-data": {
               schema: {
                 type: "object",
-                required: ["title", "content"],
+                required: ["title", "content", "categoryId"],
                 properties: {
                   title: { type: "string", example: "مقایسه React و Vue" },
                   content: { type: "string", example: "در این مقاله..." },
@@ -135,27 +135,36 @@ export const postSwagger = {
             },
           },
           400: {
-            description: `Invalid request - Validation rules:\n
+            description: `Invalid request - Validation rules:
+
 - title:
   - Must not be empty.
   - Must be a string.
   - Min length: 3.
-  - Max length: 200.\n
+  - Max length: 200.
+
 - content:
   - Must not be empty.
   - Must be a string.
-  - Min length: 10.\n
+  - Min plain-text length: 10.
+  - Max length: 100000.
+
 - categoryId:
-  - Optional.
-  - Must be a valid UUID v4.\n
+  - Must not be empty.
+  - Must be a valid UUID v4.
+  - Category must exist in the system.
+
 - published:
   - Optional.
   - Must be a boolean.
-  - Default: false.\n
+  - Default: false.
+
 - image:
   - Optional.
   - Max size: 5 MB.
-  - Allowed formats: .jpg, .jpeg, .png, .webp.`,
+  - Allowed formats: .jpg, .jpeg, .png, .webp.
+
+- Duplicate title or invalid category may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Access denied: Admin only." },
@@ -282,29 +291,39 @@ export const postSwagger = {
         responses: {
           200: { description: "Post updated successfully." },
           400: {
-            description: `Invalid request - Validation rules:\n
+            description: `Invalid request - Validation rules:
+
 - id (path):
-  - Must be a valid UUID v4.\n
+  - Must be a valid UUID v4.
+
 - title:
   - Optional.
   - Must be a string.
   - Min length: 3.
-  - Max length: 200.\n
+  - Max length: 200.
+
 - content:
   - Optional.
   - Must be a string.
-  - Min length: 10.\n
+  - Min plain-text length: 10.
+  - Max length: 100000.
+
 - categoryId:
   - Optional.
-  - Must be a valid UUID v4 or null.\n
+  - Must be a valid UUID v4.
+  - Category must exist in the system.
+
 - published:
   - Optional.
-  - Must be a boolean.\n
+  - Must be a boolean.
+
 - image:
   - Optional.
   - Max size: 5 MB.
   - Allowed formats: .jpg, .jpeg, .png, .webp.
-At least one field is required.`,
+
+- At least one field is required.
+- Duplicate title or invalid category may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Access denied: Admin only." },

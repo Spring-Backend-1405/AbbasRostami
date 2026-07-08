@@ -12,7 +12,6 @@ import {
   UpdateCategoryInput,
 } from "./category.validator.js";
 
-// ─── Helper: include count ──────────────────────
 const categoryWithCount = {
   _count: {
     select: { courses: true, posts: true },
@@ -28,7 +27,6 @@ const categoryWithPublishedCount = {
   },
 };
 
-// ─── Helper: handle unique errors ───────────────
 const handleUniqueError = (error: unknown): never => {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -44,7 +42,7 @@ const handleUniqueError = (error: unknown): never => {
 export const categoryService = {
   async createCategory(data: CreateCategoryInput) {
     try {
-      return await prisma.category.create({
+      const category = await prisma.category.create({
         data: {
           name: data.name,
           slug: createSlug(data.name),
@@ -52,8 +50,10 @@ export const categoryService = {
           show: data.show,
         },
       });
+      return category;
     } catch (error) {
       handleUniqueError(error);
+      throw error;
     }
   },
 
@@ -128,11 +128,6 @@ export const categoryService = {
       updateData.description = data.description;
     }
 
-    // اگه هیچ چیزی برای آپدیت نیست
-    if (Object.keys(updateData).length === 0) {
-      throw new AppError("حداقل یک فیلد برای ویرایش ارسال کنید", 400);
-    }
-
     try {
       return await prisma.category.update({
         where: { id },
@@ -180,12 +175,35 @@ export const categoryService = {
     });
   },
 
-  // ✅ ساده‌سازی شد
   async deleteCategory(id: string) {
-    const existing = await prisma.category.findUnique({ where: { id } });
+    const existing = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            courses: true,
+            posts: true,
+          },
+        },
+      },
+    });
 
     if (!existing) {
       throw new AppError("دسته بندی مورد نظر یافت نشد", 404);
+    }
+
+    if (existing._count.courses > 0) {
+      throw new AppError(
+        `این دسته بندی ${existing._count.courses} دوره دارد. ابتدا دوره‌ها را حذف یا به دسته دیگری منتقل کنید`,
+        400,
+      );
+    }
+
+    if (existing._count.posts > 0) {
+      throw new AppError(
+        `این دسته بندی ${existing._count.posts} مقاله دارد. ابتدا مقاله‌ها را حذف یا به دسته دیگری منتقل کنید`,
+        400,
+      );
     }
 
     await prisma.category.delete({ where: { id } });

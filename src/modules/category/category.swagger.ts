@@ -77,7 +77,7 @@ export const categorySwagger = {
                 example: {
                   status: "success",
                   data: {
-                    message: "دسته با موفقیت ایجاد شد",
+                    message: "دسته بندی با موفقیت ایجاد شد",
                     category: {
                       id: "d3b07384-d113-4956-a5cc-484443028456",
                       name: "فرانت‌اند",
@@ -93,15 +93,25 @@ export const categorySwagger = {
             },
           },
           400: {
-            description: "Validation error or duplicate name",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: { name: "این نام قبلاً استفاده شده است" },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- name:
+  - Must not be empty.
+  - Must be a string.
+  - Min length: 2.
+  - Max length: 50.
+
+- description:
+  - Optional.
+  - Must be a string.
+  - Max length: 500.
+
+- show:
+  - Optional.
+  - Must be a boolean.
+  - Default: true.
+
+- Duplicate name may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
@@ -121,25 +131,23 @@ export const categorySwagger = {
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "10" },
-            description: "limit",
           },
           {
             name: "show",
             in: "query",
             schema: { type: "string", enum: ["true", "false"] },
-            description: "فیلتر بر اساس وضعیت نمایش",
+            description: "Filter by visibility status",
           },
           {
             name: "search",
             in: "query",
             schema: { type: "string" },
-            description: "جستجو در نام و توضیحات",
+            description: "Search by name or description",
           },
         ],
         responses: {
@@ -162,11 +170,35 @@ export const categorySwagger = {
                         _count: { courses: 10, posts: 5 },
                       },
                     ],
-                    pagination: { page: 1, limit: 10, total: 25 },
+                    pagination: {
+                      total: 25,
+                      page: 1,
+                      limit: 10,
+                    },
                   },
                 },
               },
             },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.
+
+- show:
+  - Optional.
+  - Must be one of: true, false.
+
+- search:
+  - Optional.
+  - Must be a string.
+  - Max length: 100.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
@@ -186,7 +218,6 @@ export const categorySwagger = {
             in: "path",
             required: true,
             schema: { type: "string", example: "فرانت-اند" },
-            description: "slug",
           },
         ],
         responses: {
@@ -212,6 +243,13 @@ export const categorySwagger = {
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- slug (path):
+  - Must not be empty.
+  - Max length: 100.`,
+          },
           404: { description: "Category not found." },
         },
       },
@@ -222,7 +260,7 @@ export const categorySwagger = {
         tags: ["Category"],
         summary: "Update category (Admin)",
         description:
-          "Updates category fields. If name changes, slug is auto-regenerated. All fields optional.",
+          "Updates category fields. If name changes, slug is auto-regenerated. At least one field is required.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         parameters: [
           {
@@ -230,7 +268,6 @@ export const categorySwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         requestBody: {
@@ -280,15 +317,24 @@ export const categorySwagger = {
             },
           },
           400: {
-            description: "Validation error or duplicate name",
-            content: {
-              "application/json": {
-                example: {
-                  status: "fail",
-                  data: { name: "این نام قبلاً استفاده شده است" },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.
+
+- name:
+  - Optional.
+  - Must be a string.
+  - Min length: 2.
+  - Max length: 50.
+
+- description:
+  - Optional.
+  - Must be a string.
+  - Max length: 500.
+
+- At least one field is required.
+- Duplicate name may also return 400.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
@@ -299,7 +345,7 @@ export const categorySwagger = {
         tags: ["Category"],
         summary: "Delete category (Admin)",
         description:
-          "Permanently deletes a category. Associated courses and posts will have their categoryId set to null (not deleted).",
+          "Permanently deletes a category. **Cannot delete a category that has courses or posts assigned.** First reassign or delete those items.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         parameters: [
           {
@@ -307,7 +353,6 @@ export const categorySwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         responses: {
@@ -318,7 +363,41 @@ export const categorySwagger = {
                 example: {
                   status: "success",
                   data: {
-                    message: "دسته با موفقیت حذف شد",
+                    message: "دسته بندی با موفقیت حذف شد",
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.
+
+- Cannot delete a category that has courses assigned.
+- Cannot delete a category that has posts assigned.
+- First reassign or delete all courses and posts in this category.`,
+            content: {
+              "application/json": {
+                examples: {
+                  hasCourses: {
+                    summary: "دوره دارد",
+                    value: {
+                      status: "error",
+                      message:
+                        "این دسته بندی ۳ دوره دارد. ابتدا دوره‌ها را حذف یا به دسته دیگری منتقل کنید",
+                      code: 400,
+                    },
+                  },
+                  hasPosts: {
+                    summary: "مقاله دارد",
+                    value: {
+                      status: "error",
+                      message:
+                        "این دسته بندی ۵ مقاله دارد. ابتدا مقاله‌ها را حذف یا به دسته دیگری منتقل کنید",
+                      code: 400,
+                    },
                   },
                 },
               },
@@ -336,7 +415,7 @@ export const categorySwagger = {
         tags: ["Category"],
         summary: "Toggle category visibility (Admin)",
         description:
-          "Activates/deactivates a category. When deactivated, all published courses and posts in this category will be unpublished. When activated, items remain unpublished and must be published manually.",
+          "Activates or deactivates a category. When deactivated, all published courses and posts in this category will be automatically unpublished. When activated, items remain unpublished and must be published manually.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         parameters: [
           {
@@ -344,7 +423,6 @@ export const categorySwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         requestBody: {
@@ -357,7 +435,6 @@ export const categorySwagger = {
                 properties: {
                   show: {
                     type: "boolean",
-                    description: "true = فعال، false = غیرفعال",
                     example: false,
                   },
                 },
@@ -367,43 +444,25 @@ export const categorySwagger = {
         },
         responses: {
           200: {
-            description: "Status Category updated successfully.",
+            description: "Category visibility updated successfully.",
             content: {
               "application/json": {
                 examples: {
                   disabled: {
-                    summary: "غیرفعال‌سازی",
                     value: {
                       status: "success",
                       data: {
-                        message: "دسته بندی با موفقیت غیرفعال شد",
-                        category: {
-                          id: "d3b07384-d113-4956-a5cc-484443028456",
-                          name: "فرانت‌اند",
-                          slug: "فرانت-اند",
-                          description: "آموزش‌های frontend",
-                          show: false,
-                          createdAt: "2026-01-15T14:00:00.000Z",
-                          updatedAt: "2026-01-15T15:00:00.000Z",
-                        },
+                        message:
+                          "دسته بندی با موفقیت غیرفعال شد. دوره‌ها و پست‌های وابسته نیز غیرفعال شدند.",
                       },
                     },
                   },
                   enabled: {
-                    summary: "فعال‌سازی",
                     value: {
                       status: "success",
                       data: {
-                        message: "دسته بندی با موفقیت فعال شد",
-                        category: {
-                          id: "d3b07384-d113-4956-a5cc-484443028456",
-                          name: "فرانت‌اند",
-                          slug: "فرانت-اند",
-                          description: "آموزش‌های frontend",
-                          show: true,
-                          createdAt: "2026-01-15T14:00:00.000Z",
-                          updatedAt: "2026-01-15T15:00:00.000Z",
-                        },
+                        message:
+                          "دسته بندی با موفقیت فعال شد. برای انتشار دوره‌ها، آن‌ها را به صورت جداگانه فعالسازی کنید.",
                       },
                     },
                   },
@@ -412,13 +471,35 @@ export const categorySwagger = {
             },
           },
           400: {
-            description: "Status is duplicate or validation failed.",
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.
+
+- show:
+  - Must not be empty.
+  - Must be a boolean.
+
+- Category must not already be in the requested state.`,
             content: {
               "application/json": {
-                example: {
-                  status: "error",
-                  message: "دسته بندی از قبل فعال است",
-                  code: 400,
+                examples: {
+                  alreadyActive: {
+                    summary: "از قبل فعال است",
+                    value: {
+                      status: "error",
+                      message: "دسته بندی از قبل فعال است",
+                      code: 400,
+                    },
+                  },
+                  alreadyInactive: {
+                    summary: "از قبل غیرفعال است",
+                    value: {
+                      status: "error",
+                      message: "دسته بندی از قبل غیرفعال است",
+                      code: 400,
+                    },
+                  },
                 },
               },
             },

@@ -41,8 +41,13 @@ export const createCourseSchema = z.object({
       .trim()
       .optional(),
     price: coerceNumber,
+    teacherId: z
+      .string({ message: "شناسه مدرس الزامی است" })
+      .uuid("شناسه مدرس نامعتبر است"),
     level: courseLevelEnum.optional().default("BEGINNER"),
-    categoryId: z.string().uuid("شناسه دسته‌بندی نامعتبر است").optional(),
+    categoryId: z
+      .string({ message: "شناسه دسته‌بندی الزامی است" })
+      .uuid("شناسه دسته‌بندی نامعتبر است"),
     published: coerceBoolean.optional().default(false),
   }),
 });
@@ -51,31 +56,24 @@ export const updateCourseSchema = z.object({
   params: z.object({
     id: z.string().uuid("شناسه نامعتبر است"),
   }),
-  body: z
-    .object({
-      title: z
-        .string()
-        .min(3, "عنوان دوره باید حداقل ۳ کاراکتر باشد")
-        .max(150, "عنوان دوره نباید بیشتر از ۱۵۰ کاراکتر باشد")
-        .trim()
-        .optional(),
-      description: z
-        .string()
-        .max(5000, "توضیحات نباید بیشتر از ۵۰۰۰ کاراکتر باشد")
-        .trim()
-        .optional(),
-      price: coerceNumber.optional(),
-      level: courseLevelEnum.optional(),
-      categoryId: z
-        .string()
-        .uuid("شناسه دسته‌بندی نامعتبر است")
-        .nullable()
-        .optional(),
-      published: coerceBoolean.optional(),
-    })
-    .refine((data) => Object.keys(data).length > 0, {
-      message: "حداقل یک فیلد برای ویرایش الزامی است",
-    }),
+  body: z.object({
+    title: z
+      .string()
+      .min(3, "عنوان دوره باید حداقل ۳ کاراکتر باشد")
+      .max(150, "عنوان دوره نباید بیشتر از ۱۵۰ کاراکتر باشد")
+      .trim()
+      .optional(),
+    description: z
+      .string()
+      .max(5000, "توضیحات نباید بیشتر از ۵۰۰۰ کاراکتر باشد")
+      .trim()
+      .optional(),
+    teacherId: z.string().uuid("شناسه مدرس نامعتبر است").optional(),
+    price: coerceNumber.optional(),
+    level: courseLevelEnum.optional(),
+    categoryId: z.string().uuid("شناسه دسته‌بندی نامعتبر است").optional(),
+    published: coerceBoolean.optional(),
+  }),
 });
 
 export const deleteCourseSchema = z.object({

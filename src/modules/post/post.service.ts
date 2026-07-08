@@ -11,6 +11,7 @@ import {
   getReactionCounts,
   getReactionCountsForList,
 } from "../../utils/reactionHelper.js";
+import { sanitizeRichText } from "../../utils/sanitizeHtml.js";
 import { createSlug } from "../../utils/slug.js";
 import {
   CreatePostInputWithImage,
@@ -99,19 +100,17 @@ const validateCategoryExists = async (categoryId: string) => {
 
 export const postService = {
   async createPost(data: CreatePostInputWithImage) {
-    if (data.categoryId) {
-      await validateCategoryExists(data.categoryId);
-    }
+    await validateCategoryExists(data.categoryId);
 
     try {
       const post = await prisma.post.create({
         data: {
           title: data.title,
           slug: createSlug(data.title),
-          content: data.content,
+          content: sanitizeRichText(data.content),
           imageUrl: data.imageUrl,
           categoryId: data.categoryId,
-          published: data.published ?? false,
+          published: data.published,
         },
         include: postInclude,
       });
@@ -119,7 +118,7 @@ export const postService = {
       return formatPost(post);
     } catch (error) {
       if (data.imageUrl) {
-        removeCloudinaryImage(data.imageUrl);
+        await removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -131,7 +130,7 @@ export const postService = {
 
     if (!existing) {
       if (data.imageUrl) {
-        removeCloudinaryImage(data.imageUrl);
+        await removeCloudinaryImage(data.imageUrl);
       }
       throw new AppError("پست مورد نظر یافت نشد", 404);
     }
@@ -147,22 +146,15 @@ export const postService = {
       updateData.slug = createSlug(data.title);
     }
     if (data.content !== undefined) {
-      updateData.content = data.content;
+      updateData.content = sanitizeRichText(data.content);
     }
     if (data.categoryId !== undefined) {
-      updateData.category = data.categoryId
-        ? { connect: { id: data.categoryId } }
-        : { disconnect: true };
+      updateData.category = { connect: { id: data.categoryId } };
     }
-
     if (data.published !== undefined) {
       updateData.published = data.published;
     }
-
     if (data.imageUrl) {
-      if (existing.imageUrl) {
-        removeCloudinaryImage(existing.imageUrl);
-      }
       updateData.imageUrl = data.imageUrl;
     }
 
@@ -173,10 +165,14 @@ export const postService = {
         include: postInclude,
       });
 
+      if (data.imageUrl && existing.imageUrl) {
+        await removeCloudinaryImage(existing.imageUrl);
+      }
+
       return formatPost(post);
     } catch (error) {
       if (data.imageUrl) {
-        removeCloudinaryImage(data.imageUrl);
+        await removeCloudinaryImage(data.imageUrl);
       }
       handleUniqueError(error);
       throw error;
@@ -200,7 +196,7 @@ export const postService = {
       );
     }
 
-    if (published && existing.category && !existing.category.show) {
+    if (published && !existing.category.show) {
       throw new AppError(
         "نمی‌توان پست را منتشر کرد چون دسته‌بندی آن غیرفعال است",
         400,
@@ -223,11 +219,11 @@ export const postService = {
       throw new AppError("پست مورد نظر یافت نشد", 404);
     }
 
-    if (existing.imageUrl) {
-      removeCloudinaryImage(existing.imageUrl);
-    }
-
     await prisma.post.delete({ where: { id } });
+
+    if (existing.imageUrl) {
+      await removeCloudinaryImage(existing.imageUrl);
+    }
   },
 
   async getAdminPosts(query: ListPostsAdminQuery) {
@@ -272,7 +268,7 @@ export const postService = {
 
     const where: Prisma.PostWhereInput = {
       published: true,
-      OR: [{ categoryId: null }, { category: { show: true } }],
+      category: { show: true },
     };
 
     if (query.category) {
@@ -306,7 +302,6 @@ export const postService = {
     ]);
 
     const formattedPosts = formatPosts(items);
-
     const postIds = formattedPosts.map((p) => p.id);
     const reactionMap = await getReactionCountsForList(
       "postId",
@@ -336,7 +331,7 @@ export const postService = {
       where: {
         slug,
         published: true,
-        OR: [{ categoryId: null }, { category: { show: true } }],
+        category: { show: true },
       },
       include: postInclude,
     });
@@ -354,10 +349,7 @@ export const postService = {
 
     const postWithReactions = {
       ...formattedPost,
-      reactions: {
-        ...counts,
-        myReaction,
-      },
+      reactions: { ...counts, myReaction },
     };
 
     return await addFavoriteInfo(postWithReactions, userId);

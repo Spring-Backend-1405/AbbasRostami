@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { AppError } from "../../utils/AppError.js";
 import { getUserIdFromRequest } from "../../utils/getUserIdFromRequest.js";
 import { courseService } from "./course.service.js";
 import {
@@ -26,18 +27,24 @@ export const createCourseController: RequestHandler = async (req, res) => {
   });
 };
 
-export const updateCourseController: RequestHandler = async (req, res) => {
+export const updateCourseController: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
   const id = req.params.id as string;
 
-  let imageUrl: string | undefined = undefined;
-  if (req.file) {
-    imageUrl = req.file.path;
+  const updateData: Record<string, unknown> = { ...req.body };
+
+  if (req.file?.path) {
+    updateData.imageUrl = req.file.path;
   }
 
-  const course = await courseService.updateCourse(id, {
-    ...req.body,
-    imageUrl,
-  });
+  if (Object.keys(updateData).length === 0) {
+    return next(new AppError("حداقل یک فیلد برای ویرایش ارسال کنید", 400));
+  }
+
+  const course = await courseService.updateCourse(id, updateData as any);
 
   return res.status(200).json({
     status: "success",

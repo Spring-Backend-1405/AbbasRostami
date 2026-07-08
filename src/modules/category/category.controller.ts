@@ -70,7 +70,7 @@ export const toggleVisibilityController: RequestHandler = async (req, res) => {
   const id = req.params.id as string;
   const { show } = req.body;
 
-  const category = await categoryService.toggleVisibility(id, show);
+  await categoryService.toggleVisibility(id, show);
 
   return res.status(200).json({
     status: "success",
@@ -78,7 +78,6 @@ export const toggleVisibilityController: RequestHandler = async (req, res) => {
       message: show
         ? "دسته بندی با موفقیت فعال شد. برای انتشار دوره‌ها، آن‌ها را به صورت جداگانه فعالسازی کنید."
         : "دسته بندی با موفقیت غیرفعال شد. دوره‌ها و پست‌های وابسته نیز غیرفعال شدند.",
-      category,
     },
   });
 };

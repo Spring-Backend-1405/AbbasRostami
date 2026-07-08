@@ -29,8 +29,27 @@ export const courseWithCategory = {
 } satisfies Prisma.CourseInclude;
 
 export const courseInclude = {
-  ...courseWithCategory,
-  ...courseWithCount,
+  category: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+    },
+  },
+  teacher: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      avatar: true,
+    },
+  },
+  _count: {
+    select: {
+      enrollments: true,
+      comments: true,
+    },
+  },
 } satisfies Prisma.CourseInclude;
 
 export type CourseWithRelations = Prisma.CourseGetPayload<{
@@ -39,7 +58,7 @@ export type CourseWithRelations = Prisma.CourseGetPayload<{
 
 export type CourseWithStats = Omit<
   CourseWithRelations,
-  "_count" | "categoryId"
+  "_count" | "categoryId" | "teacherId"
 > & {
   stats: {
     enrollments: number;
