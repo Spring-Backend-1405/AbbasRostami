@@ -27,8 +27,6 @@ import {
 
 const router = Router();
 
-// ─── Public
-
 router.get(
   "/course/:slug",
   validate(listCourseCommentsSchema),
@@ -40,8 +38,6 @@ router.get(
   validate(listPostCommentsSchema),
   asyncHandler(getPostCommentsController),
 );
-
-// ─── User
 
 router.post(
   "/",
@@ -57,21 +53,19 @@ router.get(
   asyncHandler(getMyCommentsController),
 );
 
-router.delete(
-  "/:id",
-  authentication,
-  validate(deleteCommentSchema),
-  asyncHandler(deleteCommentController),
-);
-
-// ─── Admin
-
 router.get(
   "/admin",
   authentication,
   authorize("ADMIN"),
   validate(listAdminCommentsSchema),
   asyncHandler(getAdminCommentsController),
+);
+
+router.delete(
+  "/:id",
+  authentication,
+  validate(deleteCommentSchema),
+  asyncHandler(deleteCommentController),
 );
 
 router.post(

@@ -72,3 +72,14 @@ export type CommentMetaWithStats = Omit<CommentWithMeta, "_count"> & {
 export type CommentTreeNode = CommentWithStats & {
   replies: CommentTreeNode[];
 };
+
+export type CommentReactionState = {
+  likes: number;
+  dislikes: number;
+  myReaction: "LIKE" | "DISLIKE" | null;
+};
+
+export type CommentTreeNodeWithReactions = CommentTreeNode & {
+  reactions: CommentReactionState;
+  replies: CommentTreeNodeWithReactions[];
+};

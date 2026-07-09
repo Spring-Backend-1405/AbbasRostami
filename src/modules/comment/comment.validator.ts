@@ -73,9 +73,6 @@ export const listAdminCommentsSchema = z.object({
     page: z.string().regex(/^\d+$/, "page باید عدد باشد").optional(),
     limit: z.string().regex(/^\d+$/, "limit باید عدد باشد").optional(),
     status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
-    userId: z.string().uuid("شناسه کاربر نامعتبر است").optional(),
-    courseId: z.string().uuid("شناسه دوره نامعتبر است").optional(),
-    postId: z.string().uuid("شناسه پست نامعتبر است").optional(),
     search: z.string().trim().max(100, "search حداکثر ۱۰۰ کاراکتر").optional(),
   }),
 });
@@ -85,7 +82,6 @@ export const moderateCommentSchema = z.object({
     id: z.string().uuid("شناسه نامعتبر است"),
   }),
 });
-
 
 export const listPostCommentsSchema = z.object({
   params: z.object({
@@ -103,7 +99,6 @@ export const listPostCommentsSchema = z.object({
 export type ListPostCommentsQuery = z.infer<
   typeof listPostCommentsSchema
 >["query"];
-
 
 export type CreateCommentInput = z.infer<typeof createCommentSchema>["body"];
 

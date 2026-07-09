@@ -8,7 +8,9 @@ import {
 import { getReactionCountsForList } from "../../utils/reactionHelper.js";
 import {
   CommentMetaWithStats,
+  CommentReactionState,
   CommentTreeNode,
+  CommentTreeNodeWithReactions,
   CommentWithMeta,
   CommentWithStats,
   CommentWithUser,
@@ -22,6 +24,8 @@ import {
   ListMyCommentsQuery,
   ListPostCommentsQuery,
 } from "./comment.validator.js";
+
+// ─── Helpers
 
 const formatComment = (comment: CommentWithUser): CommentWithStats => {
   const { _count, ...rest } = comment;
@@ -60,7 +64,6 @@ const buildCommentTree = (comments: CommentWithUser[]): CommentTreeNode[] => {
     }
 
     const parentNode = map.get(comment.parentId);
-
     if (!parentNode) continue;
 
     parentNode.replies.push(currentNode);
@@ -80,6 +83,50 @@ const buildCommentTree = (comments: CommentWithUser[]): CommentTreeNode[] => {
   return syncCounts(roots);
 };
 
+const addReactionsToTree = (
+  nodes: CommentTreeNode[],
+  reactionMap: Map<string, CommentReactionState>,
+): CommentTreeNodeWithReactions[] => {
+  return nodes.map((node) => ({
+    ...node,
+    reactions: reactionMap.get(node.id) ?? {
+      likes: 0,
+      dislikes: 0,
+      myReaction: null,
+    },
+    replies: addReactionsToTree(node.replies, reactionMap),
+  }));
+};
+
+const fetchCommentDescendants = async (
+  whereBase: { courseId?: string; postId?: string },
+  rootComments: CommentWithUser[],
+): Promise<CommentWithUser[]> => {
+  const allComments: CommentWithUser[] = [...rootComments];
+  let parentIds = rootComments.map((comment) => comment.id);
+
+  while (parentIds.length > 0) {
+    const children = await prisma.comment.findMany({
+      where: {
+        ...whereBase,
+        status: "APPROVED",
+        parentId: { in: parentIds },
+      },
+      include: commentBaseInclude,
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (children.length === 0) break;
+
+    allComments.push(...children);
+    parentIds = children.map((comment) => comment.id);
+  }
+
+  return allComments;
+};
+
+// ─── Service
+
 export const commentService = {
   async createComment(userId: string, data: CreateCommentInput) {
     const { content, courseId, postId, parentId } = data;
@@ -89,7 +136,7 @@ export const commentService = {
         where: {
           id: courseId,
           published: true,
-          OR: [{ categoryId: null }, { category: { show: true } }],
+          category: { show: true },
         },
         select: { id: true },
       });
@@ -104,7 +151,7 @@ export const commentService = {
         where: {
           id: postId,
           published: true,
-          OR: [{ categoryId: null }, { category: { show: true } }],
+          category: { show: true },
         },
         select: { id: true },
       });
@@ -159,23 +206,40 @@ export const commentService = {
       where: {
         slug,
         published: true,
-        OR: [{ categoryId: null }, { category: { show: true } }],
+        category: { show: true },
       },
-      select: { id: true, title: true, slug: true },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+      },
     });
 
     if (!course) {
       throw new AppError("دوره مورد نظر یافت نشد", 404);
     }
 
-    const flatComments = await prisma.comment.findMany({
-      where: {
-        courseId: course.id,
-        status: "APPROVED",
-      },
-      include: commentBaseInclude,
-      orderBy: { createdAt: "asc" },
-    });
+    const rootWhere: Prisma.CommentWhereInput = {
+      courseId: course.id,
+      status: "APPROVED",
+      parentId: null,
+    };
+
+    const [rootComments, totalRootComments] = await Promise.all([
+      prisma.comment.findMany({
+        where: rootWhere,
+        skip,
+        take,
+        include: commentBaseInclude,
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.comment.count({ where: rootWhere }),
+    ]);
+
+    const flatComments = await fetchCommentDescendants(
+      { courseId: course.id },
+      rootComments,
+    );
 
     const tree = buildCommentTree(flatComments);
 
@@ -186,26 +250,9 @@ export const commentService = {
       userId,
     );
 
-    const addReactionsToTree = (
-      nodes: CommentTreeNode[],
-    ): (CommentTreeNode & { reactions: any })[] => {
-      return nodes.map((node) => ({
-        ...node,
-        reactions: reactionMap.get(node.id) ?? {
-          likes: 0,
-          dislikes: 0,
-          myReaction: null,
-        },
-        replies: addReactionsToTree(node.replies),
-      }));
-    };
-
-    const totalRootComments = tree.length;
-    const paginatedItems = tree.slice(skip, skip + take);
-    const itemsWithReactions = addReactionsToTree(paginatedItems);
+    const itemsWithReactions = addReactionsToTree(tree, reactionMap);
 
     return {
-      course,
       items: itemsWithReactions,
       pagination: buildPaginationMeta(totalRootComments, page, limit),
     };
@@ -222,23 +269,40 @@ export const commentService = {
       where: {
         slug,
         published: true,
-        OR: [{ categoryId: null }, { category: { show: true } }],
+        category: { show: true },
       },
-      select: { id: true, title: true, slug: true },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+      },
     });
 
     if (!post) {
       throw new AppError("پست مورد نظر یافت نشد", 404);
     }
 
-    const flatComments = await prisma.comment.findMany({
-      where: {
-        postId: post.id,
-        status: "APPROVED",
-      },
-      include: commentBaseInclude,
-      orderBy: { createdAt: "asc" },
-    });
+    const rootWhere: Prisma.CommentWhereInput = {
+      postId: post.id,
+      status: "APPROVED",
+      parentId: null,
+    };
+
+    const [rootComments, totalRootComments] = await Promise.all([
+      prisma.comment.findMany({
+        where: rootWhere,
+        skip,
+        take,
+        include: commentBaseInclude,
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.comment.count({ where: rootWhere }),
+    ]);
+
+    const flatComments = await fetchCommentDescendants(
+      { postId: post.id },
+      rootComments,
+    );
 
     const tree = buildCommentTree(flatComments);
 
@@ -249,26 +313,9 @@ export const commentService = {
       userId,
     );
 
-    const addReactionsToTree = (
-      nodes: CommentTreeNode[],
-    ): (CommentTreeNode & { reactions: any })[] => {
-      return nodes.map((node) => ({
-        ...node,
-        reactions: reactionMap.get(node.id) ?? {
-          likes: 0,
-          dislikes: 0,
-          myReaction: null,
-        },
-        replies: addReactionsToTree(node.replies),
-      }));
-    };
-
-    const totalRootComments = tree.length;
-    const paginatedItems = tree.slice(skip, skip + take);
-    const itemsWithReactions = addReactionsToTree(paginatedItems);
+    const itemsWithReactions = addReactionsToTree(tree, reactionMap);
 
     return {
-      post,
       items: itemsWithReactions,
       pagination: buildPaginationMeta(totalRootComments, page, limit),
     };
@@ -305,7 +352,9 @@ export const commentService = {
 
     const where: Prisma.CommentWhereInput = {};
 
-    if (query.status) where.status = query.status as CommentStatus;
+    if (query.status) {
+      where.status = query.status as CommentStatus;
+    }
 
     if (query.search) {
       where.content = {

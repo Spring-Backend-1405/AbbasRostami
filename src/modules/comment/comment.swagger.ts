@@ -5,7 +5,7 @@ export const commentSwagger = {
         tags: ["Comment"],
         summary: "Create a comment or reply",
         description:
-          "Creates a new comment on a course or post. If parentId is provided, it becomes a reply. All comments start with PENDING status.",
+          "Creates a new comment on a course or post. If parentId is provided, it becomes a reply. All comments start with PENDING status and require admin approval.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         requestBody: {
           required: true,
@@ -24,18 +24,14 @@ export const commentSwagger = {
                   courseId: {
                     type: "string",
                     format: "uuid",
-                    description:
-                      "شناسه دوره (یکی از courseId یا postId الزامی)",
                   },
                   postId: {
                     type: "string",
                     format: "uuid",
-                    description: "شناسه پست (یکی از courseId یا postId الزامی)",
                   },
                   parentId: {
                     type: "string",
                     format: "uuid",
-                    description: "شناسه کامنت والد (اختیاری - برای reply)",
                   },
                 },
               },
@@ -75,60 +71,42 @@ export const commentSwagger = {
                   status: "success",
                   data: {
                     message: "کامنت با موفقیت ثبت شد و در انتظار تأیید است",
-                    comment: {
-                      id: "0e4e44a8-bf48-4d4a-8d81-d6b92f0f9651",
-                      content: "این دوره خیلی عالی بود",
-                      status: "PENDING",
-                      userId: "3f1fdca8-22c9-432f-99a5-c09d9a9f4ce3",
-                      courseId: "6de9db62-0cf8-46f7-a74e-cdcb6d6f2a55",
-                      postId: null,
-                      parentId: null,
-                      createdAt: "2026-01-10T12:00:00.000Z",
-                      updatedAt: "2026-01-10T12:00:00.000Z",
-                      user: {
-                        id: "3f1fdca8-22c9-432f-99a5-c09d9a9f4ce3",
-                        name: "Ali",
-                        avatar: null,
-                      },
-                      stats: {
-                        replies: 0,
-                        reactions: 0,
-                      },
-                    },
                   },
                 },
               },
             },
           },
           400: {
-            description: "Validation error.",
-            content: {
-              "application/json": {
-                examples: {
-                  validation: {
-                    summary: "خطای اعتبارسنجی",
-                    value: {
-                      status: "fail",
-                      data: {
-                        content: "کامنت باید حداقل ۲ کاراکتر باشد",
-                        courseId: "ارسال یکی از courseId یا postId الزامی است",
-                      },
-                    },
-                  },
-                  parentMismatch: {
-                    summary: "عدم تطابق parent",
-                    value: {
-                      status: "error",
-                      message: "parentId متعلق به این دوره نیست",
-                      code: 400,
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- content:
+  - Must not be empty.
+  - Must be a string.
+  - Min length: 2.
+  - Max length: 1000.
+
+- courseId:
+  - Optional.
+  - Must be a valid UUID v4.
+  - Exactly one of courseId or postId must be provided.
+
+- postId:
+  - Optional.
+  - Must be a valid UUID v4.
+  - Exactly one of courseId or postId must be provided.
+
+- parentId:
+  - Optional.
+  - Must be a valid UUID v4.
+  - Must belong to the same course or post.
+
+- Cannot provide both courseId and postId at the same time.
+- Parent comment must belong to the same course or post.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
-          404: { description: "دوره، پست یا کامنت والد یافت نشد." },
+          404: {
+            description: "Course, post, or parent comment not found.",
+          },
         },
       },
     },
@@ -137,31 +115,29 @@ export const commentSwagger = {
       get: {
         tags: ["Comment"],
         summary: "Get course comments",
-        description: "Returns approved comments for a course.",
+        description:
+          "Returns approved comments for a course as a tree structure. Pagination applies to root comments only.",
         parameters: [
           {
             name: "slug",
             in: "path",
             required: true,
             schema: { type: "string", example: "react-advanced" },
-            description: "slug",
           },
           {
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "10" },
-            description: "limit",
           },
         ],
         responses: {
           200: {
-            description: "List of course comments.",
+            description: "List of course comments as a tree.",
             content: {
               "application/json": {
                 example: {
@@ -183,14 +159,12 @@ export const commentSwagger = {
                         parentId: null,
                         createdAt: "2026-01-10T12:00:00.000Z",
                         updatedAt: "2026-01-10T12:00:00.000Z",
-                        user: {
-                          id: "u1",
-                          name: "Ali",
-                          avatar: null,
-                        },
-                        stats: {
-                          replies: 2,
-                          reactions: 1,
+                        user: { id: "u1", name: "Ali", avatar: null },
+                        stats: { replies: 1, reactions: 2 },
+                        reactions: {
+                          likes: 2,
+                          dislikes: 0,
+                          myReaction: null,
                         },
                         replies: [
                           {
@@ -206,48 +180,43 @@ export const commentSwagger = {
                             user: {
                               id: "u2",
                               name: "Sara",
-                              avatar: "/uploads/avatars/sara.jpg",
+                              avatar: null,
                             },
-                            stats: {
-                              replies: 1,
-                              reactions: 0,
+                            stats: { replies: 0, reactions: 0 },
+                            reactions: {
+                              likes: 0,
+                              dislikes: 0,
+                              myReaction: null,
                             },
-                            replies: [
-                              {
-                                id: "c3",
-                                content: "دقیقاً",
-                                status: "APPROVED",
-                                userId: "u3",
-                                courseId: "course-uuid",
-                                postId: null,
-                                parentId: "c2",
-                                createdAt: "2026-01-10T12:06:00.000Z",
-                                updatedAt: "2026-01-10T12:06:00.000Z",
-                                user: {
-                                  id: "u3",
-                                  name: "Reza",
-                                  avatar: null,
-                                },
-                                stats: {
-                                  replies: 0,
-                                  reactions: 0,
-                                },
-                                replies: [],
-                              },
-                            ],
+                            replies: [],
                           },
                         ],
                       },
                     ],
                     pagination: {
+                      total: 1,
                       page: 1,
                       limit: 10,
-                      total: 1,
                     },
                   },
                 },
               },
             },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- slug (path):
+  - Must not be empty.
+  - Max length: 200.
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.`,
           },
           404: { description: "Course not found." },
         },
@@ -259,26 +228,23 @@ export const commentSwagger = {
         tags: ["Comment"],
         summary: "Get post comments (tree)",
         description:
-          "Returns approved comments for a blog post as a tree structure with infinite depth. Pagination applies to root comments only.",
+          "Returns approved comments for a blog post as a tree structure. Pagination applies to root comments only.",
         parameters: [
           {
             name: "slug",
             in: "path",
             required: true,
             schema: { type: "string", example: "react-vs-vue" },
-            description: "slug پست",
           },
           {
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "10" },
-            description: "limit",
           },
         ],
         responses: {
@@ -305,12 +271,8 @@ export const commentSwagger = {
                         parentId: null,
                         createdAt: "2026-01-10T12:00:00.000Z",
                         updatedAt: "2026-01-10T12:00:00.000Z",
-                        user: {
-                          id: "u1",
-                          name: "Ali",
-                          avatar: null,
-                        },
-                        stats: { replies: 1 },
+                        user: { id: "u1", name: "Ali", avatar: null },
+                        stats: { replies: 1, reactions: 3 },
                         reactions: {
                           likes: 3,
                           dislikes: 0,
@@ -332,7 +294,7 @@ export const commentSwagger = {
                               name: "Sara",
                               avatar: null,
                             },
-                            stats: { replies: 0 },
+                            stats: { replies: 0, reactions: 1 },
                             reactions: {
                               likes: 1,
                               dislikes: 0,
@@ -344,14 +306,29 @@ export const commentSwagger = {
                       },
                     ],
                     pagination: {
+                      total: 1,
                       page: 1,
                       limit: 10,
-                      total: 1,
                     },
                   },
                 },
               },
             },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- slug (path):
+  - Must not be empty.
+  - Max length: 200.
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.`,
           },
           404: { description: "Post not found." },
         },
@@ -383,7 +360,6 @@ export const commentSwagger = {
               type: "string",
               enum: ["PENDING", "APPROVED", "REJECTED"],
             },
-            description: "فیلتر بر اساس وضعیت",
           },
         ],
         responses: {
@@ -405,11 +381,7 @@ export const commentSwagger = {
                         parentId: null,
                         createdAt: "2026-01-10T12:00:00.000Z",
                         updatedAt: "2026-01-10T12:00:00.000Z",
-                        user: {
-                          id: "u1",
-                          name: "Ali",
-                          avatar: null,
-                        },
+                        user: { id: "u1", name: "Ali", avatar: null },
                         parent: null,
                         course: {
                           id: "course-1",
@@ -417,21 +389,33 @@ export const commentSwagger = {
                           slug: "react-advanced",
                         },
                         post: null,
-                        stats: {
-                          replies: 2,
-                          reactions: 1,
-                        },
+                        stats: { replies: 0, reactions: 0 },
                       },
                     ],
                     pagination: {
+                      total: 1,
                       page: 1,
                       limit: 10,
-                      total: 1,
                     },
                   },
                 },
               },
             },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.
+
+- status:
+  - Optional.
+  - Must be one of: PENDING, APPROVED, REJECTED.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
         },
@@ -467,12 +451,13 @@ export const commentSwagger = {
           {
             name: "search",
             in: "query",
-            schema: { type: "string", maxLength: 100 },
+            schema: { type: "string" },
+            description: "Search in comment content",
           },
         ],
         responses: {
           200: {
-            description: "List of comments.",
+            description: "List of all comments.",
             content: {
               "application/json": {
                 example: {
@@ -489,11 +474,7 @@ export const commentSwagger = {
                         parentId: null,
                         createdAt: "2026-01-10T12:00:00.000Z",
                         updatedAt: "2026-01-10T12:00:00.000Z",
-                        user: {
-                          id: "u1",
-                          name: "Ali",
-                          avatar: null,
-                        },
+                        user: { id: "u1", name: "Ali", avatar: null },
                         parent: null,
                         course: {
                           id: "course-1",
@@ -501,24 +482,41 @@ export const commentSwagger = {
                           slug: "react-advanced",
                         },
                         post: null,
-                        stats: {
-                          replies: 2,
-                          reactions: 1,
-                        },
+                        stats: { replies: 2, reactions: 1 },
                       },
                     ],
                     pagination: {
+                      total: 15,
                       page: 1,
                       limit: 20,
-                      total: 15,
                     },
                   },
                 },
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.
+
+- status:
+  - Optional.
+  - Must be one of: PENDING, APPROVED, REJECTED.
+
+- search:
+  - Optional.
+  - Must be a string.
+  - Max length: 100.`,
+          },
           401: { description: "Unauthorized: Invalid or expired token." },
-          403: { description: "Access denied: Admin only." },
+          403: { description: "Forbidden: Admin access required." },
         },
       },
     },
@@ -535,7 +533,6 @@ export const commentSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         responses: {
@@ -547,40 +544,19 @@ export const commentSwagger = {
                   status: "success",
                   data: {
                     message: "کامنت با موفقیت تأیید شد",
-                    comment: {
-                      id: "c1",
-                      content: "این دوره خیلی خوب بود",
-                      status: "APPROVED",
-                      userId: "u1",
-                      courseId: "course-1",
-                      postId: null,
-                      parentId: null,
-                      createdAt: "2026-01-10T12:00:00.000Z",
-                      updatedAt: "2026-01-10T12:10:00.000Z",
-                      user: {
-                        id: "u1",
-                        name: "Ali",
-                        avatar: null,
-                      },
-                      parent: null,
-                      course: {
-                        id: "course-1",
-                        title: "آموزش React پیشرفته",
-                        slug: "react-advanced",
-                      },
-                      post: null,
-                      stats: {
-                        replies: 2,
-                        reactions: 1,
-                      },
-                    },
                   },
                 },
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.`,
+          },
           401: { description: "Unauthorized: Invalid or expired token." },
-          403: { description: "Access denied: Admin only." },
+          403: { description: "Forbidden: Admin access required." },
           404: { description: "Comment not found." },
           409: {
             description: "Comment is already approved.",
@@ -610,7 +586,6 @@ export const commentSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         responses: {
@@ -622,40 +597,19 @@ export const commentSwagger = {
                   status: "success",
                   data: {
                     message: "کامنت با موفقیت رد شد",
-                    comment: {
-                      id: "c1",
-                      content: "این دوره خیلی خوب بود",
-                      status: "REJECTED",
-                      userId: "u1",
-                      courseId: "course-1",
-                      postId: null,
-                      parentId: null,
-                      createdAt: "2026-01-10T12:00:00.000Z",
-                      updatedAt: "2026-01-10T12:12:00.000Z",
-                      user: {
-                        id: "u1",
-                        name: "Ali",
-                        avatar: null,
-                      },
-                      parent: null,
-                      course: {
-                        id: "course-1",
-                        title: "آموزش React پیشرفته",
-                        slug: "react-advanced",
-                      },
-                      post: null,
-                      stats: {
-                        replies: 2,
-                        reactions: 1,
-                      },
-                    },
                   },
                 },
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.`,
+          },
           401: { description: "Unauthorized: Invalid or expired token." },
-          403: { description: "Access denied: Admin only." },
+          403: { description: "Forbidden: Admin access required." },
           404: { description: "Comment not found." },
           409: {
             description: "Comment is already rejected.",
@@ -686,7 +640,6 @@ export const commentSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         responses: {
@@ -703,10 +656,16 @@ export const commentSwagger = {
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- id (path):
+  - Must be a valid UUID v4.`,
+          },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: {
             description:
-              " permission denied: Only the comment owner or admin can delete.",
+              "Permission denied: Only the comment owner or admin can delete.",
             content: {
               "application/json": {
                 example: {

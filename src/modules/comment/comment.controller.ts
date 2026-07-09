@@ -14,13 +14,12 @@ export const createCommentController: RequestHandler = async (req, res) => {
   const userId = req.user!.id;
   const body = req.body as CreateCommentInput;
 
-  const comment = await commentService.createComment(userId, body);
+  await commentService.createComment(userId, body);
 
   return res.status(201).json({
     status: "success",
     data: {
       message: "کامنت با موفقیت ثبت شد و در انتظار تأیید است",
-      comment,
     },
   });
 };
@@ -85,13 +84,12 @@ export const getAdminCommentsController: RequestHandler = async (req, res) => {
 export const approveCommentController: RequestHandler = async (req, res) => {
   const id = req.params.id as string;
 
-  const comment = await commentService.changeStatus(id, CommentStatus.APPROVED);
+  await commentService.changeStatus(id, CommentStatus.APPROVED);
 
   return res.status(200).json({
     status: "success",
     data: {
       message: "کامنت با موفقیت تأیید شد",
-      comment,
     },
   });
 };
@@ -99,13 +97,12 @@ export const approveCommentController: RequestHandler = async (req, res) => {
 export const rejectCommentController: RequestHandler = async (req, res) => {
   const id = req.params.id as string;
 
-  const comment = await commentService.changeStatus(id, CommentStatus.REJECTED);
+  await commentService.changeStatus(id, CommentStatus.REJECTED);
 
   return res.status(200).json({
     status: "success",
     data: {
       message: "کامنت با موفقیت رد شد",
-      comment,
     },
   });
 };
