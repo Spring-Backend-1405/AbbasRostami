@@ -41,7 +41,7 @@ export const favoriteService = {
       where: {
         id: courseId,
         published: true,
-        OR: [{ categoryId: null }, { category: { show: true } }],
+        category: { show: true },
       },
       select: { id: true, title: true },
     });
@@ -102,7 +102,7 @@ export const favoriteService = {
       where: {
         id: postId,
         published: true,
-        OR: [{ categoryId: null }, { category: { show: true } }],
+        category: { show: true },
       },
       select: { id: true, title: true },
     });

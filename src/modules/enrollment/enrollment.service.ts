@@ -29,7 +29,7 @@ export const enrollmentService = {
       where: {
         slug,
         published: true,
-        OR: [{ categoryId: null }, { category: { show: true } }],
+        category: { show: true },
       },
     });
 

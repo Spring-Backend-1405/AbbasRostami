@@ -98,7 +98,11 @@ export const searchSwagger = {
                             imageUrl: "/uploads/courses/react.jpg",
                             price: 500000,
                             level: "INTERMEDIATE",
-                            category: null,
+                            category: {
+                              id: "cat-uuid",
+                              name: "فرانت‌اند",
+                              slug: "frontend",
+                            },
                           },
                         ],
                         posts: [],

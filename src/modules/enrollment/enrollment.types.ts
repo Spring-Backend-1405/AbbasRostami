@@ -6,6 +6,9 @@ export const enrollmentInclude = {
       category: {
         select: { id: true, name: true, slug: true },
       },
+      teacher: {
+        select: { id: true, name: true, slug: true, avatar: true },
+      },
       _count: {
         select: {
           enrollments: true,

@@ -1,9 +1,14 @@
 import { prisma } from "../../lib/prisma.js";
 import { SearchQuery } from "./search.validator.js";
 
-const getVisibleWhere = () => ({
+const getVisibleCourseWhere = () => ({
   published: true,
-  OR: [{ categoryId: null }, { category: { show: true } }],
+  category: { show: true },
+});
+
+const getVisiblePostWhere = () => ({
+  published: true,
+  category: { show: true },
 });
 
 export const searchService = {
@@ -20,7 +25,7 @@ export const searchService = {
       !type || type === "course"
         ? prisma.course.findMany({
             where: {
-              ...getVisibleWhere(),
+              ...getVisibleCourseWhere(),
               AND: [
                 {
                   OR: [{ title: searchFilter }, { description: searchFilter }],
@@ -51,7 +56,7 @@ export const searchService = {
       !type || type === "post"
         ? prisma.post.findMany({
             where: {
-              ...getVisibleWhere(),
+              ...getVisiblePostWhere(),
               AND: [
                 {
                   OR: [{ title: searchFilter }, { content: searchFilter }],

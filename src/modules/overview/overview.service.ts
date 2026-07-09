@@ -10,15 +10,15 @@ const getDateRanges = () => {
   const startOfThisWeek = new Date(startOfToday);
   startOfThisWeek.setDate(startOfToday.getDate() - 7);
   const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfThisWeek = new Date(now);
-  endOfThisWeek.setDate(endOfThisWeek.getDate() + 7);
+  const next7Days = new Date(now);
+  next7Days.setDate(next7Days.getDate() + 7);
 
   return {
     now,
     startOfToday,
     startOfThisWeek,
     startOfThisMonth,
-    endOfThisWeek,
+    next7Days,
   };
 };
 
@@ -80,19 +80,16 @@ export const overviewService = {
   },
 
   async getAdminCourseStats() {
-    const [total, published, unpublished, totalEnrollments] = await Promise.all(
-      [
-        prisma.course.count(),
-        prisma.course.count({ where: { published: true } }),
-        prisma.course.count({ where: { published: false } }),
-        prisma.enrollment.count(),
-      ],
-    );
+    const [total, published, totalEnrollments] = await Promise.all([
+      prisma.course.count(),
+      prisma.course.count({ where: { published: true } }),
+      prisma.enrollment.count(),
+    ]);
 
     return {
       total,
       published,
-      unpublished,
+      unpublished: total - published,
       totalEnrollments,
     };
   },
@@ -162,7 +159,7 @@ export const overviewService = {
   },
 
   async getAdminDiscountStats() {
-    const { endOfThisWeek } = getDateRanges();
+    const { next7Days } = getDateRanges();
 
     const [total, active, expiringThisWeek, topUsed] = await Promise.all([
       prisma.discount.count(),
@@ -170,7 +167,7 @@ export const overviewService = {
       prisma.discount.findMany({
         where: {
           active: true,
-          expiresAt: { lte: endOfThisWeek },
+          expiresAt: { lte: next7Days },
         },
         select: {
           id: true,
@@ -233,16 +230,15 @@ export const overviewService = {
   },
 
   async getAdminPostStats() {
-    const [total, published, unpublished] = await Promise.all([
+    const [total, published] = await Promise.all([
       prisma.post.count(),
       prisma.post.count({ where: { published: true } }),
-      prisma.post.count({ where: { published: false } }),
     ]);
 
     return {
       total,
       published,
-      unpublished,
+      unpublished: total - published,
     };
   },
 

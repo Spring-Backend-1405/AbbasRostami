@@ -95,7 +95,6 @@ export const cartService = {
     const cart = await this.getOrCreateCart(userId);
     const formatted = formatCart(cart);
 
-    // ← totalAmount از formatted رو حذف کن
     const { totalAmount, ...rest } = formatted;
     const subtotal = totalAmount;
 
