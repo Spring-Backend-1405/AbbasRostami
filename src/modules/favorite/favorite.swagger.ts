@@ -13,7 +13,6 @@ export const favoriteSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "id",
           },
         ],
         responses: {
@@ -129,7 +128,6 @@ export const favoriteSwagger = {
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
-            description: "شناسه پست",
           },
         ],
         responses: {
