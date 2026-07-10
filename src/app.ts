@@ -133,6 +133,11 @@ if (process.env.ENABLE_TEST_ROUTES === "true") {
     next(new Error("Manual test 500 error for Telegram notification"));
   });
 }
+
+app.get("/swagger.json", (_req, res) => {
+  res.json(swaggerSpec);
+});
+
 // ─── 404 Handler
 app.use((req, res) => {
   res.status(404).json({
