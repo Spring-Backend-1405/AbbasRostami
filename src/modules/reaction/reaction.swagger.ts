@@ -1,7 +1,7 @@
 const reactionResponseExample = {
   status: "success",
   data: {
-    message: "پسندیده شد",
+    message: "لایک شما ثبت شد",
     myReaction: "LIKE",
     reactions: {
       likes: 46,
@@ -13,7 +13,7 @@ const reactionResponseExample = {
 const reactionRemovedExample = {
   status: "success",
   data: {
-    message: "پسندیده‌تان برداشته شد",
+    message: "لایک شما برداشته شد",
     myReaction: null,
     reactions: {
       likes: 45,
@@ -63,10 +63,11 @@ const reactionResponses = {
             value: reactionRemovedExample,
           },
           toggled: {
-            summary: "از لایک به دیسلایک تغییر کرد",
+            summary: "تغییر از لایک به دیسلایک",
             value: {
               status: "success",
               data: {
+                message: "واکنش شما از لایک به دیسلایک تغییر کرد",
                 myReaction: "DISLIKE",
                 reactions: {
                   likes: 44,
@@ -92,7 +93,7 @@ export const reactionSwagger = {
         description:
           "Toggles like or dislike on a course. If same type exists, removes it. If opposite type exists, switches it.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
-        parameters: [{ ...reactionParam, description: "id" }],
+        parameters: [{ ...reactionParam }],
         requestBody: reactionRequestBody,
         responses: reactionResponses,
       },
@@ -104,7 +105,7 @@ export const reactionSwagger = {
         summary: "Toggle reaction on a post",
         description: "Toggles like or dislike on a blog post.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
-        parameters: [{ ...reactionParam, description: "id" }],
+        parameters: [{ ...reactionParam }],
         requestBody: reactionRequestBody,
         responses: reactionResponses,
       },
@@ -116,7 +117,7 @@ export const reactionSwagger = {
         summary: "Toggle reaction on a comment",
         description: "Toggles like or dislike on an approved comment.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
-        parameters: [{ ...reactionParam, description: "id" }],
+        parameters: [{ ...reactionParam }],
         requestBody: reactionRequestBody,
         responses: reactionResponses,
       },

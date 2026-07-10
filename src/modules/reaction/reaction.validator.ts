@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ReactionCounts } from "../../utils/reactionHelper";
 
 export const toggleReactionSchema = z.object({
   params: z.object({
@@ -12,3 +13,9 @@ export const toggleReactionSchema = z.object({
 });
 
 export type ToggleReactionBody = z.infer<typeof toggleReactionSchema>["body"];
+
+export interface ToggleResult {
+  message: string;
+  myReaction: "LIKE" | "DISLIKE" | null;
+  reactions: ReactionCounts;
+}

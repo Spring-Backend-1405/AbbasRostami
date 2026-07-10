@@ -4,10 +4,8 @@ import {
 } from "../../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import {
-  getReactionCounts,
-  ReactionCounts,
-} from "../../utils/reactionHelper.js";
+import { getReactionCounts } from "../../utils/reactionHelper.js";
+import { ToggleResult } from "./reaction.validator.js";
 
 const targetFieldMap: Record<
   ReactionTarget,
@@ -18,29 +16,24 @@ const targetFieldMap: Record<
   POST: "postId",
 };
 
-interface ToggleResult {
-  message: string;
-  myReaction: "LIKE" | "DISLIKE" | null;
-  reactions: ReactionCounts;
-}
-
 const getMessage = (
   previousType: "LIKE" | "DISLIKE" | null,
   currentType: "LIKE" | "DISLIKE" | null,
 ): string => {
-  if (!previousType && currentType === "LIKE") return "پسندیده شد";
-  if (!previousType && currentType === "DISLIKE") return "نپسندیده شد";
+  if (!previousType && currentType === "LIKE") return "لایک شما ثبت شد";
+  if (!previousType && currentType === "DISLIKE") return "دیسلایک شما ثبت شد";
 
-  if (previousType === "LIKE" && !currentType) return "پسندیده‌تان برداشته شد";
+  if (previousType === "LIKE" && !currentType) return "لایک شما برداشته شد";
   if (previousType === "DISLIKE" && !currentType)
-    return "نپسندیده‌تان برداشته شد";
+    return "دیسلایک شما برداشته شد";
 
   if (previousType === "LIKE" && currentType === "DISLIKE")
-    return "به نپسندیده تغییر یافت";
-  if (previousType === "DISLIKE" && currentType === "LIKE")
-    return "به پسندیده تغییر یافت";
+    return "واکنش شما از لایک به دیسلایک تغییر کرد";
 
-  return "عملیات موفقیت‌آمیز بود";
+  if (previousType === "DISLIKE" && currentType === "LIKE")
+    return "واکنش شما از دیسلایک به لایک تغییر کرد";
+
+  return "واکنش شما با موفقیت ثبت شد";
 };
 
 export const reactionService = {
@@ -57,7 +50,7 @@ export const reactionService = {
         where: {
           id: targetId,
           published: true,
-          OR: [{ categoryId: null }, { category: { show: true } }],
+          category: { show: true },
         },
         select: { id: true },
       });
@@ -72,7 +65,7 @@ export const reactionService = {
         where: {
           id: targetId,
           published: true,
-          OR: [{ categoryId: null }, { category: { show: true } }],
+          category: { show: true },
         },
         select: { id: true },
       });
