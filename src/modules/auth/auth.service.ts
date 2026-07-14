@@ -26,8 +26,12 @@ import {
   VerifyEmailInput,
 } from "./auth.validator.js";
 
+const OTP_EXPIRES_MS = 2 * 60 * 1000;
+
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
+
+const getOtpExpiresAt = () => new Date(Date.now() + OTP_EXPIRES_MS);
 
 export const authService = {
   async register(data: RegisterInput) {
@@ -36,14 +40,70 @@ export const authService = {
     });
 
     if (existingUser) {
-      throw new AppError("خطا در ثبت نام", 400, {
-        email: "کاربری با این ایمیل قبلاً ثبت‌ نام کرده است",
+      if (existingUser.isVerified) {
+        throw new AppError("خطا در ثبت نام", 400, {
+          email: "کاربری با این ایمیل قبلاً ثبت‌ نام کرده است",
+        });
+      }
+
+      if (existingUser.isBanned) {
+        throw new AppError("این حساب کاربری مسدود شده است", 403);
+      }
+
+      if (
+        existingUser.verificationCode &&
+        existingUser.verificationExpires &&
+        existingUser.verificationExpires > new Date()
+      ) {
+        throw new AppError("خطا در ثبت نام", 400, {
+          email:
+            "کد تایید قبلی هنوز معتبر است. لطفاً ایمیل خود را بررسی کنید یا از گزینه «ارسال مجدد کد» استفاده کنید",
+        });
+      }
+
+      const hashedPassword = await hashPassword(data.password);
+      const verificationCode = generateCode();
+      const verificationExpires = getOtpExpiresAt();
+
+      const updatedUser = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          password: hashedPassword,
+          name: data.name ?? existingUser.name,
+          verificationCode,
+          verificationExpires,
+        },
       });
+
+      const emailHtml = getVerificationEmailTemplate(
+        updatedUser.name || "کاربر گرامی",
+        verificationCode,
+      );
+
+      try {
+        await sendEmail({
+          to: updatedUser.email,
+          subject: "🔑 کد تایید حساب کاربری",
+          html: emailHtml,
+          text: `کد تایید شما: ${verificationCode}`,
+        });
+      } catch (err) {
+        console.error("❌ Error sending verification email:", err);
+        throw new AppError(
+          "ارسال ایمیل تایید ناموفق بود. لطفاً دوباره تلاش کنید.",
+          500,
+        );
+      }
+
+      return {
+        email: updatedUser.email,
+        message: "کد تایید جدید به ایمیل شما ارسال شد",
+      };
     }
 
     const hashedPassword = await hashPassword(data.password);
     const verificationCode = generateCode();
-    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const verificationExpires = getOtpExpiresAt();
 
     const user = await prisma.user.create({
       data: {
@@ -74,15 +134,17 @@ export const authService = {
       });
     } catch (err) {
       console.error("❌ Error sending verification email:", err);
-
       await prisma.user.delete({ where: { id: user.id } });
-
       throw new AppError(
         "ارسال ایمیل تایید ناموفق بود. لطفاً دوباره تلاش کنید.",
         500,
       );
     }
-    return { email: user.email, message: "کد تایید به ایمیل شما ارسال شد" };
+
+    return {
+      email: user.email,
+      message: "کد تایید به ایمیل شما ارسال شد",
+    };
   },
 
   async verifyEmail(data: VerifyEmailInput): Promise<AuthResponse> {
@@ -237,7 +299,7 @@ export const authService = {
     }
 
     const resetCode = generateCode();
-    const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const resetExpires = getOtpExpiresAt();
 
     await prisma.user.update({
       where: { id: user.id },
@@ -316,7 +378,7 @@ export const authService = {
     });
 
     const genericMessage = {
-      message: "اگر این ایمیل در سیستم وجود داشته باشد، کد ارسال شد",
+      message: "کد تایید مجدداً به ایمیل ارسال شد",
     };
 
     if (!user || user.isVerified) {
@@ -324,7 +386,7 @@ export const authService = {
     }
 
     const verificationCode = generateCode();
-    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const verificationExpires = getOtpExpiresAt();
 
     await prisma.user.update({
       where: { id: user.id },
@@ -352,7 +414,7 @@ export const authService = {
     });
 
     const genericMessage = {
-      message: "اگر این ایمیل در سیستم وجود داشته باشد، کد ارسال شد",
+      message: "کد تایید مجدداً به ایمیل ارسال شد",
     };
 
     if (!user || !user.isVerified) {
@@ -364,7 +426,7 @@ export const authService = {
     }
 
     const resetCode = generateCode();
-    const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const resetExpires = getOtpExpiresAt();
 
     await prisma.user.update({
       where: { id: user.id },
@@ -449,7 +511,7 @@ export const authService = {
     }
 
     const code = generateCode();
-    const expires = new Date(Date.now() + 15 * 60 * 1000);
+    const expires = getOtpExpiresAt();
 
     await prisma.user.update({
       where: { id: userId },
@@ -566,7 +628,7 @@ export const authService = {
     }
 
     const code = generateCode();
-    const expires = new Date(Date.now() + 15 * 60 * 1000);
+    const expires = getOtpExpiresAt();
 
     await prisma.user.update({
       where: { id: userId },

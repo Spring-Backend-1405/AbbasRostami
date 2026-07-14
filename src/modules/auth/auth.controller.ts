@@ -48,7 +48,7 @@ export const verifyEmailController: RequestHandler = async (req, res) => {
   return res.status(200).json({
     status: "success",
     data: {
-      message: "ایمیل شما با موفقیت تایید شد و وارد حساب خود شدید",
+      message: "ورود با موفقیت انجام شد",
       accessToken,
       user,
     },
