@@ -70,7 +70,7 @@ export const getReactionCountsForList = async (
     });
 
     for (const reaction of userReactions) {
-      const id = (reaction as any)[field] as string | null;
+      const id = reaction[field] as string | null;
       if (id) {
         userReactionMap.set(id, reaction.type as "LIKE" | "DISLIKE");
       }

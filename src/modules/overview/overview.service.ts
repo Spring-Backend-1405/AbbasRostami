@@ -119,42 +119,74 @@ export const overviewService = {
   async getAdminRevenueStats() {
     const { startOfToday, startOfThisWeek, startOfThisMonth } = getDateRanges();
 
+    const whereOrderPaid = { status: "PAID" as const };
+
     const whereChargeSuccess = {
       type: "CHARGE" as const,
       status: "SUCCESS" as const,
     };
 
-    const [totalResult, todayResult, thisWeekResult, thisMonthResult] =
-      await Promise.all([
-        prisma.transaction.aggregate({
-          _sum: { amount: true },
-          where: whereChargeSuccess,
-        }),
-        prisma.transaction.aggregate({
-          _sum: { amount: true },
-          where: { ...whereChargeSuccess, createdAt: { gte: startOfToday } },
-        }),
-        prisma.transaction.aggregate({
-          _sum: { amount: true },
-          where: {
-            ...whereChargeSuccess,
-            createdAt: { gte: startOfThisWeek },
-          },
-        }),
-        prisma.transaction.aggregate({
-          _sum: { amount: true },
-          where: {
-            ...whereChargeSuccess,
-            createdAt: { gte: startOfThisMonth },
-          },
-        }),
-      ]);
+    const [
+      // Sales
+      salesTotal,
+      salesToday,
+      salesThisWeek,
+      salesThisMonth,
+      // Wallet Charges
+      chargeTotal,
+      chargeToday,
+      chargeThisWeek,
+      chargeThisMonth,
+    ] = await Promise.all([
+      // Sales queries
+      prisma.order.aggregate({
+        _sum: { totalAmount: true },
+        where: whereOrderPaid,
+      }),
+      prisma.order.aggregate({
+        _sum: { totalAmount: true },
+        where: { ...whereOrderPaid, createdAt: { gte: startOfToday } },
+      }),
+      prisma.order.aggregate({
+        _sum: { totalAmount: true },
+        where: { ...whereOrderPaid, createdAt: { gte: startOfThisWeek } },
+      }),
+      prisma.order.aggregate({
+        _sum: { totalAmount: true },
+        where: { ...whereOrderPaid, createdAt: { gte: startOfThisMonth } },
+      }),
+      // Wallet queries
+      prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: whereChargeSuccess,
+      }),
+      prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: { ...whereChargeSuccess, createdAt: { gte: startOfToday } },
+      }),
+      prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: { ...whereChargeSuccess, createdAt: { gte: startOfThisWeek } },
+      }),
+      prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: { ...whereChargeSuccess, createdAt: { gte: startOfThisMonth } },
+      }),
+    ]);
 
     return {
-      total: totalResult._sum.amount ?? 0,
-      today: todayResult._sum.amount ?? 0,
-      thisWeek: thisWeekResult._sum.amount ?? 0,
-      thisMonth: thisMonthResult._sum.amount ?? 0,
+      sales: {
+        total: salesTotal._sum.totalAmount ?? 0,
+        today: salesToday._sum.totalAmount ?? 0,
+        thisWeek: salesThisWeek._sum.totalAmount ?? 0,
+        thisMonth: salesThisMonth._sum.totalAmount ?? 0,
+      },
+      walletCharges: {
+        total: chargeTotal._sum.amount ?? 0,
+        today: chargeToday._sum.amount ?? 0,
+        thisWeek: chargeThisWeek._sum.amount ?? 0,
+        thisMonth: chargeThisMonth._sum.amount ?? 0,
+      },
     };
   },
 

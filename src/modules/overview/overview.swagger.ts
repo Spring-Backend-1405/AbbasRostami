@@ -24,10 +24,18 @@ const adminOrderExample = {
 };
 
 const adminRevenueExample = {
-  total: 250000000,
-  today: 5000000,
-  thisWeek: 30000000,
-  thisMonth: 100000000,
+  sales: {
+    total: 250000000,
+    today: 5000000,
+    thisWeek: 30000000,
+    thisMonth: 100000000,
+  },
+  walletCharges: {
+    total: 50000000,
+    today: 1000000,
+    thisWeek: 5000000,
+    thisMonth: 20000000,
+  },
 };
 
 const adminDiscountExample = {
@@ -126,7 +134,8 @@ export const overviewSwagger = {
       get: {
         tags: ["Overview"],
         summary: "Get full admin overview (all sections)",
-        description: "Returns aggregated stats for all admin sections.",
+        description:
+          "Returns aggregated stats for all admin sections including users, courses, orders, revenue (sales + wallet charges), discounts, comments, posts, and enrollments.",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
@@ -218,13 +227,20 @@ export const overviewSwagger = {
     "/api/overview/admin/revenue": {
       get: {
         tags: ["Overview"],
-        summary: "Admin: Revenue stats",
+        summary: "Admin: Revenue stats (sales + wallet charges)",
         description:
-          "Total revenue from successful wallet charges (type: CHARGE, status: SUCCESS).",
+          "Revenue statistics split into two categories:\n\n" +
+          "**📊 sales**: Total revenue from paid orders\n" +
+          "- Source: `Order.totalAmount` where `status = PAID`\n" +
+          "- Includes final amount after discount deduction\n\n" +
+          "**💳 walletCharges**: Total wallet top-ups\n" +
+          "- Source: `Transaction.amount` where `type = CHARGE` and `status = SUCCESS`\n\n" +
+          "Each category includes: `total`, `today`, `thisWeek`, `thisMonth` (in Toman)",
         security: [{ CookieAuth: [] }, { BearerAuth: [] }],
         responses: {
           200: {
-            description: "Stats of revenue.",
+            description:
+              "Revenue statistics with breakdown of sales and wallet charges.",
             content: {
               "application/json": {
                 example: {

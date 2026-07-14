@@ -377,16 +377,17 @@ All endpoints are documented with request schemas, response examples, and authen
 
 ### 📦 Order Module
 
-| Method  | Endpoint                        | Description                             | Auth Required |
-| ------- | ------------------------------- | --------------------------------------- | :-----------: |
-| `GET`   | `/api/orders/verify`            | Verify payment after Zarinpal redirect  |      ❌       |
-| `GET`   | `/api/orders/my-orders`         | Get user's order history                |    ✅ User    |
-| `POST`  | `/api/orders/checkout/wallet`   | Checkout using wallet balance           |    ✅ User    |
-| `POST`  | `/api/orders/checkout/zarinpal` | Checkout using Zarinpal payment gateway |    ✅ User    |
-| `GET`   | `/api/orders/:id`               | Get order details by ID                 |    ✅ User    |
-| `PATCH` | `/api/orders/:id/cancel`        | Cancel a pending order                  |    ✅ User    |
-| `GET`   | `/api/orders/admin`             | List all orders (paginated, filterable) |   ✅ Admin    |
-| `GET`   | `/api/orders/admin/:id`         | Get any order details by ID             |   ✅ Admin    |
+| Method  | Endpoint                          | Description                             | Auth Required |
+| ------- | --------------------------------- | --------------------------------------- | :-----------: |
+| `GET`   | `/api/orders/verify`              | Verify payment after Zarinpal redirect  |      ❌       |
+| `GET`   | `/api/orders/my-orders`           | Get user's order history                |    ✅ User    |
+| `POST`  | `/api/orders/checkout/wallet`     | Checkout using wallet balance           |    ✅ User    |
+| `POST`  | `/api/orders/checkout/zarinpal`   | Checkout using Zarinpal payment gateway |    ✅ User    |
+| `GET`   | `/api/orders/:id`                 | Get order details by ID                 |    ✅ User    |
+| `PATCH` | `/api/orders/:id/cancel`          | Cancel own pending order                |    ✅ User    |
+| `GET`   | `/api/orders/admin`               | List all orders (paginated, filterable) |   ✅ Admin    |
+| `GET`   | `/api/orders/admin/:id`           | Get any order details by ID             |   ✅ Admin    |
+| `PATCH` | `/api/orders/admin/:id/cancel`    | Cancel any pending order                |   ✅ Admin    |
 
 ---
 
