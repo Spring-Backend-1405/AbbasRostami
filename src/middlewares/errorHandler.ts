@@ -3,7 +3,35 @@ import { AppError } from "../utils/AppError.js";
 import { logger, sendErrorToTelegram } from "./logger.js";
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  const notifyTelegram = (
+    statusCode: number,
+    message: string,
+    stack?: string,
+  ) => {
+    sendErrorToTelegram({
+      statusCode,
+      method: req.method,
+      path: req.originalUrl,
+      message,
+      stack,
+      userId: req.user?.id,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+    }).catch(() => {});
+  };
+
+  // AppError
   if (err instanceof AppError) {
+    if (err.statusCode >= 500) {
+      logger.error("💥 Server Error", {
+        message: err.message,
+        stack: err.stack,
+        method: req.method,
+        path: req.originalUrl,
+      });
+      notifyTelegram(err.statusCode, err.message, err.stack);
+    }
+
     if (err.status === "fail") {
       return res.status(err.statusCode).json({
         status: "fail",
@@ -18,6 +46,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     });
   }
 
+  // Unexpected Errors
   logger.error("💥 Unexpected Error", {
     message: err.message,
     stack: err.stack,
@@ -25,16 +54,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     path: req.originalUrl,
   });
 
-  sendErrorToTelegram({
-    statusCode: 500,
-    method: req.method,
-    path: req.originalUrl,
-    message: err.message || "Unknown error",
-    stack: err.stack,
-    userId: req.user?.id,
-    ip: req.ip,
-    userAgent: req.headers["user-agent"],
-  }).catch(() => {});
+  notifyTelegram(500, err.message || "Unknown error", err.stack);
 
   return res.status(500).json({
     status: "error",
