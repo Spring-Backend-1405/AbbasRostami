@@ -4,6 +4,7 @@ import { authorize } from "../../middlewares/authorization.js";
 import { validate } from "../../middlewares/validate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
+  adminCancelOrderController,
   cancelOrderController,
   checkoutWalletController,
   checkoutZarinpalController,
@@ -57,6 +58,13 @@ router.patch(
   "/:id/cancel",
   validate(cancelOrderSchema),
   asyncHandler(cancelOrderController),
+);
+
+router.patch(
+  "/admin/:id/cancel",
+  authorize("ADMIN"),
+  validate(getAdminOrderSchema),
+  asyncHandler(adminCancelOrderController),
 );
 
 export default router;

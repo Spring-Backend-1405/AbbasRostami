@@ -271,7 +271,6 @@ export const walletService = {
 
     if (query.status) where.status = query.status;
     if (query.type) where.type = query.type;
-    if (query.userId) where.userId = query.userId;
 
     if (query.startDate || query.endDate) {
       where.createdAt = {};

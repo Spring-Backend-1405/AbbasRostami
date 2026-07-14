@@ -494,5 +494,93 @@ export const orderSwagger = {
         },
       },
     },
+
+    "/api/orders/admin/{id}/cancel": {
+      patch: {
+        tags: ["Order"],
+        summary: "Cancel a pending order (Admin)",
+        description:
+          "Admin can cancel any PENDING order. " +
+          "Cannot cancel PAID orders (requires refund functionality). " +
+          "Cannot cancel already CANCELLED orders.",
+        security: [{ CookieAuth: [] }, { BearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Order cancelled successfully by admin.",
+            content: {
+              "application/json": {
+                example: {
+                  status: "success",
+                  data: {
+                    message: "سفارش توسط ادمین لغو شد",
+                    order: {
+                      id: "order-uuid",
+                      totalAmount: 800000,
+                      status: "CANCELLED",
+                      paymentMethod: null,
+                      createdAt: "2026-01-15T14:00:00.000Z",
+                      updatedAt: "2026-01-15T14:10:00.000Z",
+                      user: {
+                        id: "user-uuid",
+                        email: "ali@example.com",
+                        name: "Ali",
+                      },
+                      items: [
+                        {
+                          id: "item-uuid",
+                          courseId: "course-uuid",
+                          courseTitle: "آموزش React پیشرفته",
+                          courseSlug: "react-advanced",
+                          courseImageUrl: "/uploads/courses/react.jpg",
+                          price: 500000,
+                          createdAt: "2026-01-15T14:00:00.000Z",
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Order cannot be cancelled.",
+            content: {
+              "application/json": {
+                examples: {
+                  alreadyCancelled: {
+                    summary: "قبلاً لغو شده",
+                    value: {
+                      status: "error",
+                      message: "این سفارش قبلاً لغو شده است",
+                      code: 400,
+                    },
+                  },
+                  alreadyPaid: {
+                    summary: "پرداخت شده",
+                    value: {
+                      status: "error",
+                      message:
+                        "امکان لغو سفارش پرداخت شده وجود ندارد. برای این کار نیاز به بازپرداخت (Refund) دارید",
+                      code: 400,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "Unauthorized: Invalid or expired token." },
+          403: { description: "Forbidden: Admin access required." },
+          404: { description: "Order not found." },
+        },
+      },
+    },
   },
 };

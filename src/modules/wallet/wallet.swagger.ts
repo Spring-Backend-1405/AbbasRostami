@@ -103,39 +103,14 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
             },
           },
           400: {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                examples: {
-                  notANumber: {
-                    summary: "مبلغ string",
-                    value: {
-                      status: "fail",
-                      data: { amount: "مبلغ باید عدد باشد" },
-                    },
-                  },
-                  tooLow: {
-                    summary: "مبلغ خیلی کم",
-                    value: {
-                      status: "fail",
-                      data: {
-                        amount: "حداقل مبلغ شارژ ۱۰،۰۰۰ ریال (۱،۰۰۰ تومان) است",
-                      },
-                    },
-                  },
-                  tooHigh: {
-                    summary: "مبلغ خیلی زیاد",
-                    value: {
-                      status: "fail",
-                      data: {
-                        amount:
-                          "حداکثر مبلغ شارژ ۵۰۰،۰۰۰،۰۰۰ ریال (۵۰ میلیون تومان) است",
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            description: `Invalid request - Validation rules:
+
+- amount:
+  - Must not be empty.
+  - Must be a number.
+  - Must be an integer.
+  - Minimum: 10,000 (ریال).
+  - Maximum: 500,000,000 (ریال).`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           500: {
@@ -166,13 +141,11 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "page",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "string", example: "10" },
-            description: "limit",
           },
           {
             name: "status",
@@ -181,7 +154,6 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
               type: "string",
               enum: ["PENDING", "SUCCESS", "FAILED", "CANCELLED"],
             },
-            description: "فیلتر بر اساس وضعیت",
           },
           {
             name: "type",
@@ -190,7 +162,6 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
               type: "string",
               enum: ["CHARGE", "PURCHASE", "REFUND"],
             },
-            description: "فیلتر بر اساس نوع تراکنش",
           },
         ],
         responses: {
@@ -228,6 +199,25 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.
+
+- status:
+  - Optional.
+  - Must be one of: PENDING, SUCCESS, FAILED, CANCELLED.
+
+- type:
+  - Optional.
+  - Must be one of: CHARGE, PURCHASE, REFUND.`,
+          },
           401: { description: "Unauthorized: Invalid or expired token." },
         },
       },
@@ -245,31 +235,26 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "page",
           },
           {
             name: "limit",
             in: "query",
-            schema: { type: "string", example: "20" },
-            description: "limit",
+            schema: { type: "string", example: "10" },
           },
           {
             name: "minBalance",
             in: "query",
-            schema: { type: "string", example: "100000" },
-            description: "حداقل موجودی (به ریال)",
+            schema: { type: "string" },
           },
           {
             name: "maxBalance",
             in: "query",
-            schema: { type: "string", example: "10000000" },
-            description: "حداکثر موجودی (به ریال)",
+            schema: { type: "string" },
           },
           {
             name: "search",
             in: "query",
-            schema: { type: "string", example: "ali" },
-            description: "جستجو در email یا نام کاربر",
+            schema: { type: "string" },
           },
         ],
         responses: {
@@ -300,6 +285,30 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
               },
             },
           },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.
+
+- minBalance:
+  - Optional.
+  - Must be a numeric string.
+
+- maxBalance:
+  - Optional.
+  - Must be a numeric string.
+
+- search:
+  - Optional.
+  - Must be a string.
+  - Max length: 100.`,
+          },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },
         },
@@ -318,13 +327,11 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
             name: "page",
             in: "query",
             schema: { type: "string", example: "1" },
-            description: "page",
           },
           {
             name: "limit",
             in: "query",
-            schema: { type: "string", example: "20" },
-            description: "limit",
+            schema: { type: "string", example: "10" },
           },
           {
             name: "status",
@@ -333,7 +340,6 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
               type: "string",
               enum: ["PENDING", "SUCCESS", "FAILED", "CANCELLED"],
             },
-            description: "فیلتر بر اساس وضعیت",
           },
           {
             name: "type",
@@ -342,25 +348,16 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
               type: "string",
               enum: ["CHARGE", "PURCHASE", "REFUND"],
             },
-            description: "فیلتر بر اساس نوع",
-          },
-          {
-            name: "userId",
-            in: "query",
-            schema: { type: "string", format: "uuid" },
-            description: "تراکنش‌های یک کاربر خاص",
           },
           {
             name: "startDate",
             in: "query",
             schema: { type: "string", format: "date-time" },
-            description: "از تاریخ (ISO 8601)",
           },
           {
             name: "endDate",
             in: "query",
             schema: { type: "string", format: "date-time" },
-            description: "تا تاریخ (ISO 8601)",
           },
         ],
         responses: {
@@ -395,6 +392,37 @@ Creates a PENDING transaction and returns ZarinPal payment URL.
                 },
               },
             },
+          },
+          400: {
+            description: `Invalid request - Validation rules:
+
+- page:
+  - Optional.
+  - Must be a numeric string.
+
+- limit:
+  - Optional.
+  - Must be a numeric string.
+
+- status:
+  - Optional.
+  - Must be one of: PENDING, SUCCESS, FAILED, CANCELLED.
+
+- type:
+  - Optional.
+  - Must be one of: CHARGE, PURCHASE, REFUND.
+
+- userId:
+  - Optional.
+  - Must be a valid UUID v4.
+
+- startDate:
+  - Optional.
+  - Must be a valid ISO 8601 datetime.
+
+- endDate:
+  - Optional.
+  - Must be a valid ISO 8601 datetime.`,
           },
           401: { description: "Unauthorized: Invalid or expired token." },
           403: { description: "Forbidden: Admin access required." },

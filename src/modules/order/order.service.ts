@@ -253,7 +253,6 @@ export const orderService = {
   async checkoutWithZarinpal(userId: string) {
     const order = await prisma.$transaction(async (tx) => {
       return createOrderFromCart(userId, tx);
-      // ← cart clear نمی‌کنیم
     });
 
     const user = await prisma.user.findUnique({
@@ -434,6 +433,51 @@ export const orderService = {
         where: { id: orderId },
         data: { status: "CANCELLED" },
         include: orderDetailInclude,
+      });
+
+      await tx.transaction.updateMany({
+        where: {
+          orderId,
+          status: "PENDING",
+        },
+        data: {
+          status: "CANCELLED",
+        },
+      });
+
+      return updatedOrder;
+    });
+
+    return cancelled;
+  },
+
+  async adminCancelOrder(orderId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: orderAdminInclude,
+    });
+
+    if (!order) {
+      throw new AppError("سفارش یافت نشد", 404);
+    }
+
+    if (order.status === "CANCELLED") {
+      throw new AppError("این سفارش قبلاً لغو شده است", 400);
+    }
+
+    if (order.status === "PAID") {
+      throw new AppError(
+        "امکان لغو سفارش پرداخت شده وجود ندارد.",
+        //  "امکان لغو سفارش پرداخت شده وجود ندارد. برای این کار نیاز به بازپرداخت (Refund) دارید",
+        400,
+      );
+    }
+
+    const cancelled = await prisma.$transaction(async (tx) => {
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: { status: "CANCELLED" },
+        include: orderAdminInclude,
       });
 
       await tx.transaction.updateMany({

@@ -42,9 +42,7 @@ export const verifyOrderController: RequestHandler = async (req, res) => {
     );
   }
 
-  const reason = encodeURIComponent(
-    (result as any).reason || "پرداخت ناموفق بود",
-  );
+  const reason = encodeURIComponent(result.reason || "پرداخت ناموفق بود");
   return res.redirect(
     `${FRONTEND_URL}/orders/failed?orderId=${result.orderId}&reason=${reason}`,
   );
@@ -86,6 +84,20 @@ export const cancelOrderController: RequestHandler = async (req, res) => {
     status: "success",
     data: {
       message: "سفارش با موفقیت لغو شد",
+      order,
+    },
+  });
+};
+
+export const adminCancelOrderController: RequestHandler = async (req, res) => {
+  const orderId = req.params.id as string;
+
+  const order = await orderService.adminCancelOrder(orderId);
+
+  return res.status(200).json({
+    status: "success",
+    data: {
+      message: "سفارش توسط ادمین لغو شد",
       order,
     },
   });
